@@ -1,0 +1,155 @@
+@import 'tailwindcss';
+
+/*
+  InsightIQ — sistema de cor.
+  Toda cor tem significado. Nada aqui é decorativo.
+
+    accent  ciano/azul  → navegação, foco, ação primária
+    ai      violeta     → tudo que foi produzido pelo motor de análise
+    health  verde       → saúde da conta, pipeline, sinal positivo
+    warn    âmbar       → atenção, pendência, dado de baixa confiabilidade
+    risk    vermelho    → churn, receita em risco, concorrente ativo
+    gold    dourado     → exclusivo da marca ("o ouro invisível de cada conversa")
+
+  Tema escuro é o padrão. O claro troca só os valores abaixo — nenhum
+  componente conhece o tema, todos leem as variáveis.
+*/
+
+:root,
+[data-theme='dark'] {
+  --canvas: #070a10;
+  --surface: #0d121b;
+  --surface-2: #131a26;
+  --surface-3: #1a2331;
+  --line: #1e2937;
+  --line-strong: #2c3a4d;
+
+  --ink: #e6edf7;
+  --ink-dim: #93a3bb;
+  --ink-faint: #64748b;
+
+  --accent: #22b8ff;
+  --accent-soft: #0b3a54;
+  --ai: #a78bfa;
+  --ai-soft: #2e2350;
+  --health: #12b76a;
+  --health-soft: #0b3b26;
+  --warn: #f5a524;
+  --warn-soft: #43300a;
+  --risk: #f04438;
+  --risk-soft: #4a1512;
+  --gold: #d9a441;
+
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+}
+
+[data-theme='light'] {
+  --canvas: #f5f7fa;
+  --surface: #ffffff;
+  --surface-2: #f0f3f8;
+  --surface-3: #e6ebf3;
+  --line: #dde3ec;
+  --line-strong: #c3cddb;
+
+  --ink: #0f1a2a;
+  --ink-dim: #4a5a72;
+  --ink-faint: #71829b;
+
+  --accent: #0369a1;
+  --accent-soft: #e0f2fe;
+  --ai: #6d28d9;
+  --ai-soft: #ede9fe;
+  --health: #047857;
+  --health-soft: #d1fae5;
+  --warn: #b45309;
+  --warn-soft: #fef3c7;
+  --risk: #b42318;
+  --risk-soft: #fee4e2;
+  --gold: #a1741f;
+
+  --shadow: 0 1px 2px rgb(15 26 42 / 0.06), 0 8px 24px -12px rgb(15 26 42 / 0.18);
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-ai: var(--ai);
+  --color-ai-soft: var(--ai-soft);
+  --color-health: var(--health);
+  --color-health-soft: var(--health-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-risk: var(--risk);
+  --color-risk-soft: var(--risk-soft);
+  --color-gold: var(--gold);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --shadow-panel: var(--shadow);
+}
+
+html {
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Acessibilidade: foco sempre visível, inclusive na navegação por teclado. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--canvas);
+}
+
+/* Densidade de terminal de operação: scrollbar fina, sem ocupar espaço visual. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

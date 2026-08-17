@@ -1,0 +1,32 @@
+{
+  "name": "insightiq",
+  "version": "0.1.0",
+  "private": true,
+  "description": "InsightIQ — o ouro invisível de cada conversa. Challenge FIAP x TOTVS 2026.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "node --import tsx --test lib/analysis/__tests__/golden.test.ts lib/analysis/__tests__/armadilhas.test.ts lib/analysis/__tests__/evidencia.test.ts",
+    "validar": "tsx scripts/validar.ts",
+    "types": "echo \"gerado via MCP Supabase — ver lib/supabase/database.types.ts\""
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
+    "lucide-react": "^1.31.0",
+    "next": "^15.5.23",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "recharts": "^3.10.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.12",
+    "typescript": "^5.9.3"
+  }
+}
