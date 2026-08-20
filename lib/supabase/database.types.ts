@@ -118,6 +118,7 @@ export type AnalysisRow = {
   voice_of_customer: Json;
   business_value: Json;
   score_factors: Json;
+  churn_factors: Json;
   evidence: Json;
   latency_ms: number | null;
   token_cost: number | null;
