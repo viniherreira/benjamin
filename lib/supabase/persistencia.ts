@@ -622,6 +622,8 @@ export type DadosBriefing = {
   transcricao: string;
   qualidade: TranscriptRow['quality'];
   analise: AnalysisResult | null;
+  /** Id da linha em `analyses` — necessário para registrar correções humanas. */
+  analiseId: string | null;
 };
 
 /**
@@ -739,5 +741,6 @@ export async function carregarBriefing(meetingId: string): Promise<DadosBriefing
     analise: analise.data
       ? linhaParaAnalise(analise.data as AnalysisRow, quality, (tarefas.data ?? []) as ActionItemRow[], texto)
       : null,
+    analiseId: (analise.data as AnalysisRow | null)?.id ?? null,
   };
 }

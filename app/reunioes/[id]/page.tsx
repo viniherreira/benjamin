@@ -5,6 +5,7 @@ import { Badge, PageHeader } from '@/components/ui';
 import { carregarBriefing } from '@/lib/supabase/persistencia';
 import { Briefing } from './briefing';
 import { BotaoReprocessar } from './reprocessar';
+import { ProvedorCorrecao } from './correcao';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,7 @@ export default async function BriefingPage({ params }: { params: Promise<{ id: s
   const dados = await carregarBriefing(id);
   if (!dados) notFound();
 
-  const { reuniao, analise, transcricao } = dados;
+  const { reuniao, analise, transcricao, analiseId } = dados;
 
   const metaLinha = [
     reuniao.cliente,
@@ -108,7 +109,9 @@ export default async function BriefingPage({ params }: { params: Promise<{ id: s
             </div>
           ) : null}
 
-          <Briefing transcricao={transcricao} analise={analise} />
+          <ProvedorCorrecao analiseId={analiseId}>
+            <Briefing transcricao={transcricao} analise={analise} />
+          </ProvedorCorrecao>
         </>
       ) : (
         <div className="rounded-lg border border-risk/30 bg-risk-soft/25 px-6 py-10 text-center">

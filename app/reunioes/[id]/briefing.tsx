@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import type { AnalysisResult, BusinessUnit, Evidence } from '@/lib/analysis';
 import { Badge, Mono, type Tom } from '@/components/ui';
+import { ControleCorrecao } from './correcao';
 
 /* ------------------------------------------------------------------ *
  * Formatação
@@ -236,48 +237,62 @@ const Vazio = ({ children }: { children: ReactNode }) => (
 );
 
 /** Linha clicável que destaca a evidência na transcrição. */
+/**
+ * Item extraído: clicar destaca a evidência na transcrição, e o controle ao
+ * lado registra a confirmação ou a correção humana.
+ *
+ * É um `div` com um botão interno, não um botão externo: os controles de
+ * correção são botões e não podem ser aninhados dentro de outro botão.
+ */
 function ItemEv({
   ev,
   sel,
   onSelect,
+  campo,
+  valor,
   children,
 }: {
   ev?: Evidence;
   sel: Sel;
   onSelect: (e: Evidence | undefined) => void;
+  /** Nome do campo em `corrections`. Sem ele, o item não é corrigível. */
+  campo?: string;
+  valor?: unknown;
   children: ReactNode;
 }) {
   const clicavel = Boolean(ev?.quote);
   const ativo =
     ev != null && sel != null && ev.start === sel.start && ev.end === sel.end && ev.end > ev.start;
   return (
-    <button
-      type="button"
-      disabled={!clicavel}
-      onClick={() => onSelect(ev)}
-      className={`group w-full rounded-md border px-3 py-2 text-left transition-colors ${
-        ativo
-          ? 'border-accent/50 bg-accent-soft/40'
-          : clicavel
-            ? 'border-line bg-surface-2 hover:border-line-strong'
-            : 'border-line bg-surface-2'
-      }`}
+    <div
+      className={`group rounded-md border px-3 py-2 transition-colors ${
+        ativo ? 'border-accent/50 bg-accent-soft/40' : 'border-line bg-surface-2'
+      } ${clicavel ? 'hover:border-line-strong' : ''}`}
     >
       <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1 text-[12.5px] leading-relaxed text-ink">{children}</div>
+        <button
+          type="button"
+          disabled={!clicavel}
+          onClick={() => onSelect(ev)}
+          title={clicavel ? 'Ver o trecho que originou este item' : undefined}
+          className="min-w-0 flex-1 text-left text-[12.5px] leading-relaxed text-ink disabled:cursor-default"
+        >
+          {children}
+        </button>
         {clicavel ? (
           <Quote
             size={12}
             className={`mt-0.5 shrink-0 ${ativo ? 'text-accent' : 'text-ink-faint group-hover:text-ink-dim'}`}
           />
         ) : null}
+        {campo ? <ControleCorrecao campo={campo} valor={valor ?? ev?.quote ?? null} /> : null}
       </div>
       {ev?.quote ? (
         <p className="mt-1 line-clamp-2 font-mono text-[11px] italic leading-snug text-ink-faint">
           “{ev.quote}”
         </p>
       ) : null}
-    </button>
+    </div>
   );
 }
 
@@ -496,7 +511,7 @@ function Ecossistema({
           {analise.totvs_products.map((p, i) => {
             const st = STATUS_PRODUTO[p.status] ?? STATUS_PRODUTO.mencionado;
             return (
-              <ItemEv key={`${p.name}-${i}`} ev={p.evidence} sel={sel} onSelect={onSelect}>
+              <ItemEv key={`${p.name}-${i}`} ev={p.evidence} sel={sel} onSelect={onSelect} campo="produto" valor={p.name}>
                 <span className="flex flex-wrap items-center gap-2">
                   <span className="font-medium">{p.name}</span>
                   <Badge tom={st.tom}>{st.rotulo}</Badge>
@@ -529,7 +544,7 @@ function Oportunidades({
       {analise.opportunities.length > 0 ? (
         <div className="space-y-1.5">
           {analise.opportunities.map((o, i) => (
-            <ItemEv key={`${o.product}-${i}`} ev={o.evidence} sel={sel} onSelect={onSelect}>
+            <ItemEv key={`${o.product}-${i}`} ev={o.evidence} sel={sel} onSelect={onSelect} campo="oportunidade" valor={o.product}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{o.product}</span>
                 {o.unit !== 'indefinido' ? <Badge tom="accent">{UNIDADE[o.unit]}</Badge> : null}
@@ -565,7 +580,7 @@ function Concorrentes({
       {analise.competitors.length > 0 ? (
         <div className="space-y-1.5">
           {analise.competitors.map((c, i) => (
-            <ItemEv key={`${c.name}-${i}`} ev={c.evidence} sel={sel} onSelect={onSelect}>
+            <ItemEv key={`${c.name}-${i}`} ev={c.evidence} sel={sel} onSelect={onSelect} campo="concorrente" valor={c.name}>
               <span className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{c.name}</span>
                 <Badge tom={c.active ? SEVERIDADE[c.threat] ?? 'neutro' : 'neutro'}>
@@ -789,7 +804,7 @@ function Tarefas({
       {analise.action_items.length > 0 ? (
         <div className="space-y-1.5">
           {analise.action_items.map((t, i) => (
-            <ItemEv key={i} ev={t.evidence} sel={sel} onSelect={onSelect}>
+            <ItemEv key={i} ev={t.evidence} sel={sel} onSelect={onSelect} campo="tarefa" valor={t.description}>
               <div className="flex flex-wrap items-center gap-2">
                 <span>{t.description}</span>
                 <Badge tom={t.side === 'interno' ? 'accent' : 'neutro'}>
@@ -824,7 +839,7 @@ function Financeiro({
     <Secao titulo="Budget" icone={<BadgeDollarSign size={14} />}>
       <div className="space-y-1.5">
         {analise.budget.map((b, i) => (
-          <ItemEv key={i} ev={b.evidence} sel={sel} onSelect={onSelect}>
+          <ItemEv key={i} ev={b.evidence} sel={sel} onSelect={onSelect} campo="budget" valor={b.amount ?? b.raw}>
             <span className="flex flex-wrap items-center gap-2">
               <Mono tom="health" className="text-[14px]">
                 {b.amount != null ? fmtBRL(b.amount) : b.raw}
