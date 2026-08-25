@@ -25,6 +25,7 @@ import {
   CONTEXTO_CONCORRENTE_ATIVO,
   CONTEXTO_CONCORRENTE_HISTORICO,
   GATILHOS_COMPRA,
+  MARCA_TERCEIRO,
   OBJECOES,
   PRODUTOS,
   SINAIS_CHURN,
@@ -457,12 +458,19 @@ export function extrairPersona(prep: Preparado): Persona {
   const dentroDeSuperior = (pos: number): boolean =>
     spansSuperior.some(([i, f]) => pos >= i && pos < f);
 
+  // "A Cláudia, que é a coordenadora" fala do cargo de outra pessoa. Olhar a
+  // janela imediatamente anterior ao cargo separa o interlocutor de terceiros.
+  const ehDeTerceiro = (pos: number): boolean =>
+    MARCA_TERCEIRO.test(prep.textoBusca.slice(Math.max(0, pos - 40), pos));
+
   let role: string | undefined;
   let poder: Persona['decision_power'] = 'desconhecido';
   let evidencia: Persona['evidence'];
 
   for (const cargo of CARGOS) {
-    const cs = casar(prep, cargo.padrao).filter((c) => !dentroDeSuperior(c.inicio));
+    const cs = casar(prep, cargo.padrao).filter(
+      (c) => !dentroDeSuperior(c.inicio) && !ehDeTerceiro(c.inicio),
+    );
     const c = cs[0];
     if (c) {
       role = cargo.rotulo;

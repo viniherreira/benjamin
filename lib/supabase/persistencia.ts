@@ -3,6 +3,7 @@ import type {
   ActionItemRow,
   AlertRow,
   AnalysisRow,
+  CustomerRow,
   Json,
   MeetingRow,
   TranscriptRow,
@@ -12,9 +13,12 @@ import type {
   AnalysisResult,
   Concorrente,
   Evidence,
+  MemoriaCliente,
   Motor,
   Oportunidade,
+  Problema,
 } from '@/lib/analysis';
+import { carregarHistorico, consolidar, paraMemoriaDoMotor } from '@/lib/memory';
 
 /**
  * Camada de ESCRITA e leitura consolidada do InsightIQ.
@@ -234,6 +238,61 @@ function montarAlertas(
   return alertas;
 }
 
+/** Só entram no radar as dores com categoria — sem categoria não há cluster. */
+function parseProblemas(problemas: Problema[]): Problema[] {
+  return problemas.filter((p) => p.category && p.evidence?.quote);
+}
+
+/* ------------------------------------------------------------------ *
+ * Retrato consolidado do cliente (camada 2)
+ * ------------------------------------------------------------------ */
+
+/**
+ * Recalcula o cliente sobre TODO o histórico e grava o resultado.
+ *
+ * Roda depois de cada análise: o health score, a stack, as objeções em aberto e
+ * o rapport são propriedades do relacionamento, não de uma reunião. Manter isso
+ * materializado em `customers` é o que permite a lista de clientes e a torre de
+ * controle lerem sem recalcular tudo a cada request.
+ */
+export async function recalcularCliente(customerId: string): Promise<void> {
+  const sb = supabaseServer();
+  const historico = await carregarHistorico(customerId);
+  if (!historico) return;
+
+  const v = consolidar(historico);
+
+  // Pipeline: soma das oportunidades da última análise, ponderada pela
+  // probabilidade. É estimativa declarada, não promessa.
+  let upsell = 0;
+  const ultima = v.ultimaReuniao?.analise;
+  if (ultima) {
+    const oportunidades = (ultima.opportunities as unknown as Oportunidade[]) ?? [];
+    upsell = oportunidades.reduce(
+      (s, o) => s + (o.estimated_value ?? v.budgetMaisRecente ?? 0) * o.probability,
+      0,
+    );
+  }
+
+  const atualizacao = await sb
+    .from('customers')
+    .update({
+      health_score: v.health.score,
+      health_band: v.health.band,
+      health_factors: j(v.health.factors),
+      totvs_stack: j(v.stack),
+      open_needs: j(v.necessidades),
+      open_objections: j(v.objecoes.filter((o) => !o.resolvida)),
+      trust_level: v.confiancaHistorica.at(-1) ?? 50,
+      upsell_potential: upsell > 0 ? Math.round(upsell) : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', customerId);
+  if (atualizacao.error) {
+    throw new Error(`Falha ao atualizar cliente: ${atualizacao.error.message}`);
+  }
+}
+
 /* ------------------------------------------------------------------ *
  * Ingestão — o coração da Fase 3.
  * ------------------------------------------------------------------ */
@@ -244,7 +303,35 @@ export type EntradaIngestao = {
   data: string; // ISO yyyy-mm-dd
   clienteNome?: string;
   texto: string;
+  /** 'paste' na ingestão manual; 'corpus' quando vem do seed do arco. */
+  origem?: MeetingRow['source'];
 };
+
+/**
+ * Cria ou completa o cadastro de um cliente com os parâmetros de negócio.
+ *
+ * `contract_value` é parâmetro configurável, não adivinhação: é a base do
+ * cálculo de receita em risco, e a UI declara isso onde o número aparece.
+ */
+export async function definirCliente(
+  nome: string,
+  dados: { segmento?: string; porte?: string; estagio?: string; valorContrato?: number },
+): Promise<string> {
+  const sb = supabaseServer();
+  const ctx = await garantirOrgEUsuaria();
+  const id = await upsertCliente(ctx, nome, ctx.userId);
+  if (!id) throw new Error('Nome de cliente vazio.');
+
+  const campos: Partial<CustomerRow> = { updated_at: new Date().toISOString() };
+  if (dados.segmento) campos.segment = dados.segmento;
+  if (dados.porte) campos.size = dados.porte;
+  if (dados.estagio) campos.stage = dados.estagio;
+  if (dados.valorContrato != null) campos.contract_value = dados.valorContrato;
+
+  const up = await sb.from('customers').update(campos).eq('id', id);
+  if (up.error) throw new Error(`Falha ao atualizar cliente: ${up.error.message}`);
+  return id;
+}
 
 /**
  * Fluxo completo: cria a reunião, roda o motor, persiste transcript + análise +
@@ -265,7 +352,7 @@ export async function criarReuniaoComAnalise(entrada: EntradaIngestao): Promise<
       title: entrada.titulo,
       meeting_type: entrada.tipo,
       meeting_date: entrada.data,
-      source: 'paste',
+      source: entrada.origem ?? 'paste',
       status: 'analyzing',
     })
     .select('id')
@@ -274,10 +361,28 @@ export async function criarReuniaoComAnalise(entrada: EntradaIngestao): Promise<
   const meetingId = criada.data.id;
 
   try {
+    // Camada 2: o passado do cliente entra como contexto da análise. É o que
+    // permite ao motor concluir "preço é objeção recorrente, 3 das 4 últimas
+    // reuniões" — nenhuma reunião isolada carrega essa informação.
+    let memoria: MemoriaCliente | undefined;
+    if (customerId) {
+      const historico = await carregarHistorico(customerId);
+      if (historico) {
+        const visao = consolidar(historico);
+        // A reunião recém-criada ainda não tem análise; só há memória se já
+        // existiam conversas analisadas antes desta.
+        if (visao.interesseHistorico.length > 0) memoria = paraMemoriaDoMotor(visao);
+      }
+    }
+
     // Um único preparo determinístico. analisar() reprepara com o mesmo texto e,
     // sendo determinístico, produz offsets idênticos aos deste prep.
     const prep = preparar(entrada.texto);
-    const analise = analisar({ texto: entrada.texto, dataReuniao: entrada.data });
+    const analise = analisar({
+      texto: entrada.texto,
+      dataReuniao: entrada.data,
+      ...(memoria ? { memoria } : {}),
+    });
 
     const transcript = await sb.from('transcripts').insert({
       meeting_id: meetingId,
@@ -369,12 +474,35 @@ export async function criarReuniaoComAnalise(entrada: EntradaIngestao): Promise<
       if (ins.error) throw new Error(`Falha ao gravar alertas: ${ins.error.message}`);
     }
 
+    // Cada dor vira uma linha própria. O Radar (Fase 6) agrega estas linhas;
+    // gravá-las na ingestão evita ter que reprocessar todo o histórico depois.
+    // A unidade de negócio fica a cargo do Radar, que é quem faz a clusterização.
+    const dores = parseProblemas(analise.problems);
+    if (dores.length > 0) {
+      const ins = await sb.from('pain_signals').insert(
+        dores.map((p) => ({
+          org_id: ctx.orgId,
+          meeting_id: meetingId,
+          customer_id: customerId,
+          raw_text: p.text,
+          canonical_topic: p.category,
+          category: p.category,
+          evidence: p.evidence.quote,
+        })),
+      );
+      if (ins.error) throw new Error(`Falha ao gravar sinais de dor: ${ins.error.message}`);
+    }
+
     const dur = Math.round(analise.transcript_quality.estimated_minutes);
     const fim = await sb
       .from('meetings')
       .update({ status: 'analyzed', duration_min: dur > 0 ? dur : null })
       .eq('id', meetingId);
     if (fim.error) throw new Error(`Falha ao finalizar reunião: ${fim.error.message}`);
+
+    // Com a análise já gravada, o retrato do cliente é recalculado sobre todo o
+    // histórico — health score, stack, objeções em aberto e rapport.
+    if (customerId) await recalcularCliente(customerId);
 
     return meetingId;
   } catch (erro) {

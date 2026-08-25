@@ -250,7 +250,9 @@ export const OBJECOES: { categoria: CategoriaObjecao; padroes: string[] }[] = [
       'tem desconto',
       'sai mais barato',
       'valor (?:esta|ta) alto',
-      'preco (?:esta|ta|continua) (?:alto|sendo o ponto|caro)',
+      // "o preço de vocês continua sendo o ponto": o qualificador entre o
+      // substantivo e o verbo é comum na fala e quebrava o casamento colado.
+      'preco\\b[^.!?]{0,25}?(?:esta|ta|continua|segue) (?:alto|caro|sendo o ponto|acima|elevado)',
       'numero (?:grande|alto)',
       'salgado',
       'ainda (?:esta|ta) fora',
@@ -599,7 +601,25 @@ export const SUPERIOR_ACIMA = [
   'preciso (?:aprovar|validar) com',
   'quem (?:aprova|decide) e',
   'levar (?:pra|para) (?:a )?diretoria',
+  // Quem diz "agora depende do CFO" está declarando que NÃO é ele quem assina.
+  'depende d[oa] (?:cfo|ceo|diretor|presidente|conselho|diretoria|comite)',
+  'aprovacao d[oa] (?:cfo|ceo|diretor|presidente|conselho|diretoria|comite)',
+  'passar (?:pel[oa]|por) (?:compras|comite|juridico|financeiro)',
+  'vai (?:pro|para o) (?:financeiro|juridico|comite|conselho)',
 ];
+
+/**
+ * Marcas de que o cargo citado logo à frente é de OUTRA pessoa.
+ *
+ * "A Cláudia, que é a coordenadora lá" descreve a coordenadora do RH do cliente,
+ * não o cargo de quem está falando. Sem esta guarda, o cargo de qualquer pessoa
+ * mencionada na conversa era atribuído ao interlocutor — e com ele o poder de
+ * decisão, que é o campo que a TOTVS pediu no exemplo canônico.
+ *
+ * Testado contra a janela de texto IMEDIATAMENTE anterior ao cargo.
+ */
+export const MARCA_TERCEIRO =
+  /(?:que (?:e|era|seria)|falar com|conversar com|depende d[oa]|aprovacao d[oa]|pel[oa]|com [oa])\s+(?:o\s+|a\s+|nosso\s+|nossa\s+|meu\s+|minha\s+)*$/;
 
 /* ================================================================== *
  * Muletas de linguagem — proxy de ruído da transcrição

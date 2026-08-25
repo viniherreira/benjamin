@@ -145,6 +145,39 @@ body {
   background-clip: content-box;
 }
 
+/*
+  Impressão: o briefing pré-reunião é feito para ser levado em papel para a call.
+  Some a navegação e força fundo claro — economiza tinta e melhora a leitura.
+*/
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  :root,
+  [data-theme='dark'],
+  [data-theme='light'] {
+    --canvas: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #ffffff;
+    --surface-3: #f2f2f2;
+    --line: #cccccc;
+    --line-strong: #999999;
+    --ink: #000000;
+    --ink-dim: #333333;
+    --ink-faint: #666666;
+    --shadow: none;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -91,7 +91,7 @@ export function Shell({ children, motor }: { children: ReactNode; motor: string 
 
   return (
     <div className="flex min-h-dvh">
-      <aside className="sticky top-0 hidden h-dvh w-[228px] shrink-0 flex-col border-r border-line bg-surface md:flex">
+      <aside className="no-print sticky top-0 hidden h-dvh w-[228px] shrink-0 flex-col border-r border-line bg-surface md:flex">
         <div className="flex items-center gap-2.5 px-4 py-4">
           <Logo size={26} />
           <div className="min-w-0">
@@ -156,7 +156,7 @@ export function Shell({ children, motor }: { children: ReactNode; motor: string 
       </aside>
 
       {/* Barra de navegação do mobile */}
-      <header className="fixed inset-x-0 top-0 z-20 flex items-center justify-between border-b border-line bg-surface px-4 py-2.5 md:hidden">
+      <header className="no-print fixed inset-x-0 top-0 z-20 flex items-center justify-between border-b border-line bg-surface px-4 py-2.5 md:hidden">
         <Link href="/" className="flex items-center gap-2">
           <Logo size={22} />
           <Wordmark />
@@ -178,7 +178,7 @@ export function Shell({ children, motor }: { children: ReactNode; motor: string 
       </main>
 
       {/* Navegação inferior do mobile */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-around border-t border-line bg-surface py-1.5 md:hidden">
+      <nav className="no-print fixed inset-x-0 bottom-0 z-20 flex items-center justify-around border-t border-line bg-surface py-1.5 md:hidden">
         {GRUPOS.flatMap((g) => g.itens)
           .slice(0, 5)
           .map((item) => {
