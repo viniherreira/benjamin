@@ -12,6 +12,7 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { EXEMPLO_CANONICO } from '@/lib/analysis/exemplo-canonico';
+import { CapturaAoVivo, CapturaPorAudio } from './captura';
 
 type Aba = 'texto' | 'audio' | 'vivo';
 
@@ -240,7 +241,28 @@ export function FormIngestao() {
             </div>
           )
         ) : (
-          <BetaAdaptador aba={aba} />
+          <div className="space-y-3">
+            {aba === 'vivo' ? (
+              <CapturaAoVivo texto={texto} onTexto={setTexto} />
+            ) : (
+              <CapturaPorAudio onTexto={setTexto} />
+            )}
+            {texto.trim().length >= 20 ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+                <p className="text-[11.5px] text-ink-dim">
+                  {palavras} palavra(s) capturada(s). O texto segue o mesmo caminho de análise da aba
+                  “Colar texto”.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setAba('texto')}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-ink transition-colors hover:border-line-strong"
+                >
+                  Revisar e analisar
+                </button>
+              </div>
+            ) : null}
+          </div>
         )}
       </div>
     </div>
@@ -320,24 +342,3 @@ function Progresso({ etapa }: { etapa: number }) {
   );
 }
 
-function BetaAdaptador({ aba }: { aba: Aba }) {
-  const vivo = aba === 'vivo';
-  return (
-    <div className="rounded-md border border-dashed border-warn/40 bg-warn-soft/20 px-5 py-8">
-      <div className="mx-auto max-w-lg text-center">
-        <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-lg border border-warn/40 bg-surface text-warn">
-          {vivo ? <Mic size={17} /> : <AudioLines size={17} />}
-        </div>
-        <h3 className="text-[13px] font-semibold text-ink">
-          {vivo ? 'Captura ao vivo' : 'Upload de áudio'} — adaptador de entrada, chega na{' '}
-          <span className="font-mono text-warn">Fase 7</span>
-        </h3>
-        <p className="mx-auto mt-1.5 max-w-md text-[12px] leading-relaxed text-ink-dim">
-          O núcleo do InsightIQ é agnóstico à origem do texto: {vivo ? 'a captura ao vivo (Web Speech API, pt-BR)' : 'o upload de áudio (adaptador STT plugável)'}{' '}
-          só produz a transcrição, que segue exatamente o mesmo caminho de análise da aba “Colar texto”.
-          {vivo ? ' A gravação exigirá aviso de consentimento antes de iniciar (LGPD).' : ' Sem credencial de STT, o sistema mostra o erro honesto em vez de simular.'}
-        </p>
-      </div>
-    </div>
-  );
-}
