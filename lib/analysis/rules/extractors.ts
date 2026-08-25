@@ -687,10 +687,19 @@ const DECISAO = [
   'vamos (?:seguir|fechar|com) (?:com|o|a)',
   'optamos por',
   'escolhemos',
-  'fechado',
+  // "Fechado." sozinho é aceite, não decisão; e em "quero levar isso fechado"
+  // a palavra descreve uma intenção. Exigir a forma verbal separa os casos.
+  '(?:ta|esta|fica|ficou) fechado',
+  'fechado[,.]? (?:entao|assim)',
   'ta acertado',
   'entao fica (?:assim|desse jeito)',
 ];
+
+/**
+ * Decisão precisa ter conteúdo. Uma sentença de duas palavras é confirmação
+ * ("Combinado.", "Fechado."), e entrava no briefing como se fosse deliberação.
+ */
+const MIN_PALAVRAS_DECISAO = 4;
 
 const PROXIMO_PASSO = [
   'proximo passo',
@@ -721,6 +730,8 @@ export function extrairDecisoes(prep: Preparado): Decisao[] {
   for (const padrao of DECISAO) {
     for (const c of casar(prep, padrao)) {
       const ev = evidenciaEm(prep, c.inicio, c.fim);
+      const palavras = (ev.quote.match(/[\p{L}\p{N}]+/gu) ?? []).length;
+      if (palavras < MIN_PALAVRAS_DECISAO) continue;
       saida.push({ text: ev.quote, confidence: 0.75, evidence: ev });
     }
   }

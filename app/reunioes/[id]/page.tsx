@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Cpu, ShieldAlert, Timer, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Cpu, Download, ShieldAlert, Timer, TriangleAlert } from 'lucide-react';
 import { Badge, PageHeader } from '@/components/ui';
 import { carregarBriefing } from '@/lib/supabase/persistencia';
 import { Briefing } from './briefing';
@@ -57,7 +57,7 @@ export default async function BriefingPage({ params }: { params: Promise<{ id: s
         descricao={metaLinha}
         acoes={
           analise ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge tom="ai">
                 <Cpu size={11} />
                 motor: {MOTOR_LABEL[analise.engine] ?? analise.engine}
@@ -66,6 +66,22 @@ export default async function BriefingPage({ params }: { params: Promise<{ id: s
                 <Timer size={11} />
                 {analise.latency_ms} ms
               </Badge>
+              <a
+                href={`/api/meetings/${reuniao.id}/export?formato=csv`}
+                className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-ink transition-colors hover:border-line-strong"
+                title="Campos mapeados para importar no CRM (UC09)"
+              >
+                <Download size={13} />
+                CSV
+              </a>
+              <a
+                href={`/api/meetings/${reuniao.id}/export`}
+                className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-ink transition-colors hover:border-line-strong"
+                title="Payload JSON com evidências, pronto para integração"
+              >
+                <Download size={13} />
+                JSON
+              </a>
             </div>
           ) : null
         }
