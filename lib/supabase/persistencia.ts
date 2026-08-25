@@ -334,6 +334,110 @@ export async function definirCliente(
 }
 
 /**
+ * Grava a análise e tudo que deriva dela: tarefas, alertas e sinais de dor.
+ *
+ * Compartilhada pela ingestão e pelo reprocessamento — as duas precisam gravar
+ * exatamente os mesmos artefatos, e duplicar isso seria garantir que um dia
+ * divergissem.
+ */
+async function gravarAnalise(p: {
+  sb: ReturnType<typeof supabaseServer>;
+  meetingId: string;
+  orgId: string;
+  customerId: string | null;
+  clienteNome: string | null;
+  analise: AnalysisResult;
+}): Promise<void> {
+  const { sb, meetingId, orgId, customerId, analise } = p;
+
+  const analiseInsert = await sb
+    .from('analyses')
+    .insert({
+      meeting_id: meetingId,
+      engine: analise.engine,
+      model: analise.model ?? null,
+      summary: analise.summary,
+      customer_needs: j(analise.customer_needs),
+      problems: j(analise.problems),
+      decisions: j(analise.decisions),
+      objections: j(analise.objections),
+      next_steps: j(analise.next_steps),
+      opportunities: j(analise.opportunities),
+      risks: j(analise.risks),
+      totvs_products: j(analise.totvs_products),
+      competitors: j(analise.competitors),
+      budget: j(analise.budget),
+      persona: j(analise.persona),
+      sentiment: analise.sentiment,
+      sentiment_score: analise.sentiment_score,
+      aspect_sentiment: j(analise.aspect_sentiment),
+      interest_score: analise.interest_score,
+      churn_risk: analise.churn_risk,
+      churn_signals: j(analise.churn_signals),
+      upsell_signals: j(analise.upsell_signals),
+      trust_score: analise.trust_score,
+      trust_signals: j(analise.trust_signals),
+      conversation_metrics: j(analise.conversation_metrics),
+      bant: j(analise.bant),
+      voice_of_customer: j(analise.voice_of_customer),
+      business_value: j(analise.business_value),
+      score_factors: j(analise.score_factors),
+      churn_factors: j(analise.churn_factors),
+      evidence: j(agregarEvidencia(analise)),
+      latency_ms: analise.latency_ms,
+      token_cost: 0, // motor determinístico: custo de API R$ 0,00
+    })
+    .select('id')
+    .single();
+  if (analiseInsert.error) throw new Error(`Falha ao gravar análise: ${analiseInsert.error.message}`);
+
+  if (analise.action_items.length > 0) {
+    const tarefas = await sb.from('action_items').insert(
+      analise.action_items.map((t) => ({
+        org_id: orgId,
+        meeting_id: meetingId,
+        customer_id: customerId,
+        description: t.description,
+        responsible: t.responsible,
+        side: t.side,
+        due_date: t.due_date,
+        evidence: t.evidence.quote,
+      })),
+    );
+    if (tarefas.error) throw new Error(`Falha ao gravar tarefas: ${tarefas.error.message}`);
+  }
+
+  const alertas = montarAlertas(analise, {
+    orgId,
+    customerId,
+    meetingId,
+    clienteNome: p.clienteNome,
+  });
+  if (alertas.length > 0) {
+    const ins = await sb.from('alerts').insert(alertas);
+    if (ins.error) throw new Error(`Falha ao gravar alertas: ${ins.error.message}`);
+  }
+
+  // Cada dor vira uma linha própria; o Radar agrega estas linhas. A unidade de
+  // negócio é derivada na leitura do radar, que é quem faz a clusterização.
+  const dores = parseProblemas(analise.problems);
+  if (dores.length > 0) {
+    const ins = await sb.from('pain_signals').insert(
+      dores.map((d) => ({
+        org_id: orgId,
+        meeting_id: meetingId,
+        customer_id: customerId,
+        raw_text: d.text,
+        canonical_topic: d.category,
+        category: d.category,
+        evidence: d.evidence.quote,
+      })),
+    );
+    if (ins.error) throw new Error(`Falha ao gravar sinais de dor: ${ins.error.message}`);
+  }
+}
+
+/**
  * Fluxo completo: cria a reunião, roda o motor, persiste transcript + análise +
  * tarefas + alertas e marca a reunião como analisada. Devolve o id para a UI
  * redirecionar ao briefing. Em falha, marca a reunião como 'error' com a mensagem.
@@ -406,92 +510,14 @@ export async function criarReuniaoComAnalise(entrada: EntradaIngestao): Promise<
     });
     if (transcript.error) throw new Error(`Falha ao gravar transcrição: ${transcript.error.message}`);
 
-    const analiseInsert = await sb
-      .from('analyses')
-      .insert({
-        meeting_id: meetingId,
-        engine: analise.engine,
-        model: analise.model ?? null,
-        summary: analise.summary,
-        customer_needs: j(analise.customer_needs),
-        problems: j(analise.problems),
-        decisions: j(analise.decisions),
-        objections: j(analise.objections),
-        next_steps: j(analise.next_steps),
-        opportunities: j(analise.opportunities),
-        risks: j(analise.risks),
-        totvs_products: j(analise.totvs_products),
-        competitors: j(analise.competitors),
-        budget: j(analise.budget),
-        persona: j(analise.persona),
-        sentiment: analise.sentiment,
-        sentiment_score: analise.sentiment_score,
-        aspect_sentiment: j(analise.aspect_sentiment),
-        interest_score: analise.interest_score,
-        churn_risk: analise.churn_risk,
-        churn_signals: j(analise.churn_signals),
-        upsell_signals: j(analise.upsell_signals),
-        trust_score: analise.trust_score,
-        trust_signals: j(analise.trust_signals),
-        conversation_metrics: j(analise.conversation_metrics),
-        bant: j(analise.bant),
-        voice_of_customer: j(analise.voice_of_customer),
-        business_value: j(analise.business_value),
-        score_factors: j(analise.score_factors),
-        churn_factors: j(analise.churn_factors),
-        evidence: j(agregarEvidencia(analise)),
-        latency_ms: analise.latency_ms,
-        token_cost: 0, // motor determinístico: custo de API R$ 0,00
-      })
-      .select('id')
-      .single();
-    if (analiseInsert.error) throw new Error(`Falha ao gravar análise: ${analiseInsert.error.message}`);
-
-    if (analise.action_items.length > 0) {
-      const tarefas = await sb.from('action_items').insert(
-        analise.action_items.map((t) => ({
-          org_id: ctx.orgId,
-          meeting_id: meetingId,
-          customer_id: customerId,
-          description: t.description,
-          responsible: t.responsible,
-          side: t.side,
-          due_date: t.due_date,
-          evidence: t.evidence.quote,
-        })),
-      );
-      if (tarefas.error) throw new Error(`Falha ao gravar tarefas: ${tarefas.error.message}`);
-    }
-
-    const alertas = montarAlertas(analise, {
+    await gravarAnalise({
+      sb,
+      meetingId,
       orgId: ctx.orgId,
       customerId,
-      meetingId,
       clienteNome: entrada.clienteNome?.trim() || null,
+      analise,
     });
-    if (alertas.length > 0) {
-      const ins = await sb.from('alerts').insert(alertas);
-      if (ins.error) throw new Error(`Falha ao gravar alertas: ${ins.error.message}`);
-    }
-
-    // Cada dor vira uma linha própria. O Radar (Fase 6) agrega estas linhas;
-    // gravá-las na ingestão evita ter que reprocessar todo o histórico depois.
-    // A unidade de negócio fica a cargo do Radar, que é quem faz a clusterização.
-    const dores = parseProblemas(analise.problems);
-    if (dores.length > 0) {
-      const ins = await sb.from('pain_signals').insert(
-        dores.map((p) => ({
-          org_id: ctx.orgId,
-          meeting_id: meetingId,
-          customer_id: customerId,
-          raw_text: p.text,
-          canonical_topic: p.category,
-          category: p.category,
-          evidence: p.evidence.quote,
-        })),
-      );
-      if (ins.error) throw new Error(`Falha ao gravar sinais de dor: ${ins.error.message}`);
-    }
 
     const dur = Math.round(analise.transcript_quality.estimated_minutes);
     const fim = await sb
@@ -510,6 +536,79 @@ export async function criarReuniaoComAnalise(entrada: EntradaIngestao): Promise<
     await sb.from('meetings').update({ status: 'error', error_message: mensagem }).eq('id', meetingId);
     throw erro;
   }
+}
+
+/**
+ * Reprocessa uma reunião já ingerida com a versão atual do motor.
+ *
+ * Necessário sempre que léxico ou regra evoluem: a transcrição continua a
+ * mesma, mas a leitura dela melhora. Os itens derivados da análise anterior
+ * (análise, tarefas, alertas e sinais de dor) são substituídos, senão a base
+ * acumularia duas leituras concorrentes da mesma conversa.
+ *
+ * A transcrição NUNCA é reescrita — ela é o dado bruto e o sistema de
+ * coordenadas das evidências.
+ */
+export async function reanalisarReuniao(meetingId: string): Promise<void> {
+  const sb = supabaseServer();
+
+  const reuniao = await sb
+    .from('meetings')
+    .select('id, org_id, customer_id, meeting_date')
+    .eq('id', meetingId)
+    .maybeSingle();
+  if (reuniao.error) throw new Error(`Falha ao carregar reunião: ${reuniao.error.message}`);
+  if (!reuniao.data) throw new Error('Reunião não encontrada.');
+
+  const transcript = await sb
+    .from('transcripts')
+    .select('raw_text')
+    .eq('meeting_id', meetingId)
+    .maybeSingle();
+  if (transcript.error) throw new Error(`Falha ao carregar transcrição: ${transcript.error.message}`);
+  if (!transcript.data?.raw_text) throw new Error('Esta reunião não tem transcrição para reprocessar.');
+
+  const m = reuniao.data;
+
+  // Memória do cliente EXCLUINDO esta reunião: reprocessar não pode fazer a
+  // conversa influenciar a própria análise.
+  let memoria: MemoriaCliente | undefined;
+  if (m.customer_id) {
+    const historico = await carregarHistorico(m.customer_id);
+    if (historico) {
+      const anteriores = {
+        ...historico,
+        reunioes: historico.reunioes.filter(
+          (r) => r.id !== meetingId && r.meeting_date <= m.meeting_date,
+        ),
+      };
+      const visao = consolidar(anteriores);
+      if (visao.interesseHistorico.length > 0) memoria = paraMemoriaDoMotor(visao);
+    }
+  }
+
+  const analise = analisar({
+    texto: transcript.data.raw_text,
+    dataReuniao: m.meeting_date,
+    ...(memoria ? { memoria } : {}),
+  });
+
+  // Fora com a leitura antiga antes de gravar a nova.
+  for (const tabela of ['analyses', 'action_items', 'alerts', 'pain_signals'] as const) {
+    const del = await sb.from(tabela).delete().eq('meeting_id', meetingId);
+    if (del.error) throw new Error(`Falha ao limpar ${tabela}: ${del.error.message}`);
+  }
+
+  await gravarAnalise({
+    sb,
+    meetingId,
+    orgId: m.org_id,
+    customerId: m.customer_id,
+    clienteNome: null,
+    analise,
+  });
+
+  if (m.customer_id) await recalcularCliente(m.customer_id);
 }
 
 /* ------------------------------------------------------------------ *

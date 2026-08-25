@@ -360,9 +360,62 @@ export const CATEGORIAS_DOR: {
     padroes: ['fiscal', 'tributari', 'sped', 'nota fiscal', 'icms', 'apuracao de imposto', 'obrigacao acessoria'],
   },
   {
+    // Dor de capital de giro é porta de entrada da TOTVS Techfin, não do ERP.
+    // Por isso as expressões de antecipação e prazo de recebimento moram aqui e
+    // não em 'custo' — é o que faz o radar apontar a unidade certa.
     categoria: 'financeiro',
     rotulo: 'Financeiro e fluxo de caixa',
-    padroes: ['fluxo de caixa', 'contas a (?:pagar|receber)', 'conciliacao', 'inadimplencia', 'capital de giro', 'cobranca'],
+    padroes: [
+      'fluxo de caixa',
+      'contas a (?:pagar|receber)',
+      'conciliacao',
+      'inadimplencia',
+      'capital de giro',
+      'cobranca',
+      // Expressões colhidas da fala real do corpus: ninguém diz "tenho um
+      // problema de capital de giro", diz "fico segurando o caixa".
+      'antecipa(?:ndo|cao|r) (?:de )?(?:receb(?:ivel|iveis|imento)|duplicata)',
+      'receb(?:ivel|iveis|imento)',
+      'demora (?:pra|para) receber',
+      'nao e vender,? e receber',
+      'segurando o caixa',
+      'paga em (?:noventa|cento e vinte|sessenta|trinta|\\d+) dias',
+      'prazo de (?:recebimento|pagamento)',
+      'juros (?:do|de|no) (?:banco|antecipacao)',
+      'banco cobra caro',
+      'credito (?:no|com o) banco',
+      'aperta(?:do)? no caixa',
+    ],
+  },
+  {
+    // RD Station: previsibilidade de funil e qualificação de lead. Sem esta
+    // categoria a dor caía em 'relatórios' e o radar a exibia como Gestão.
+    categoria: 'pipeline',
+    rotulo: 'Previsibilidade de pipeline',
+    padroes: [
+      'previsibilidade de (?:pipeline|funil|vendas|receita)',
+      'pipeline (?:furado|vazio|sem)',
+      'funil (?:furado|vazio|sem)',
+      'forecast',
+      'nao sei quanto vou vender',
+      'nao consigo prever (?:a receita|as vendas|o mes)',
+      'crm (?:que )?ninguem (?:preenche|alimenta)',
+      'previsao de vendas',
+    ],
+  },
+  {
+    categoria: 'marketing',
+    rotulo: 'Geração de demanda',
+    padroes: [
+      'lead (?:nao|mal) qualificado',
+      'lead frio',
+      'marketing nao (?:gera|traz|entrega)',
+      'gerar (?:mais )?lead',
+      'geracao de (?:demanda|lead)',
+      'nao chega (?:lead|oportunidade)',
+      'campanha nao (?:converte|traz)',
+      'taxa de conversao (?:baixa|ruim)',
+    ],
   },
   {
     categoria: 'estoque',

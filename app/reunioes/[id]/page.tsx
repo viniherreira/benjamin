@@ -4,6 +4,7 @@ import { ArrowLeft, Cpu, Download, ShieldAlert, Timer, TriangleAlert } from 'luc
 import { Badge, PageHeader } from '@/components/ui';
 import { carregarBriefing } from '@/lib/supabase/persistencia';
 import { Briefing } from './briefing';
+import { BotaoReprocessar } from './reprocessar';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +67,7 @@ export default async function BriefingPage({ params }: { params: Promise<{ id: s
                 <Timer size={11} />
                 {analise.latency_ms} ms
               </Badge>
+              <BotaoReprocessar meetingId={reuniao.id} />
               <a
                 href={`/api/meetings/${reuniao.id}/export?formato=csv`}
                 className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-ink transition-colors hover:border-line-strong"
