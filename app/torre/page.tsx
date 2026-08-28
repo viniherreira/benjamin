@@ -13,6 +13,8 @@ import {
 import { Badge, Card, EmptyState, Mono, PageHeader, BotaoLink, type Tom } from '@/components/ui';
 import { tomChurn, tomHealth } from '@/components/cliente-ui';
 import { carregarTorre } from '@/lib/torre';
+import { supabaseConfigurado } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +72,18 @@ function CardValor({
 }
 
 export default async function TorrePage() {
+  if (!supabaseConfigurado()) {
+    return (
+      <>
+        <PageHeader
+          titulo="Torre de controle"
+          descricao="A visão do Diretor Comercial: onde está a receita em risco, o pipeline identificado e o dinheiro que ninguém foi buscar."
+        />
+        <SemBanco oQueApareceAqui="Aqui a torre consolida todas as contas em reais: receita em risco por churn alto, pipeline ponderado por probabilidade e por unidade de negócio, upsell detectado e não trabalhado, e o throughput real do motor." />
+      </>
+    );
+  }
+
   const t = await carregarTorre();
 
   if (t.totalAnalises === 0) {

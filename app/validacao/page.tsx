@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { Badge, Card, Mono, PageHeader, type Tom } from '@/components/ui';
 import { carregarValidacao } from '@/lib/validacao';
+import { supabaseConfigurado } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 import { coberturaCorpus } from '@/lib/validation/corpus-sintetico';
 import { CORPUS_REAL, CORPUS_REAL_PENDENTE } from '@/lib/validation/corpus-real';
 import { MetricasAoVivo } from './metricas-ao-vivo';
@@ -75,9 +77,12 @@ function Numero({ valor, rotulo, tom = 'neutro' }: { valor: string; rotulo: stri
 }
 
 export default async function ValidacaoPage() {
-  const v = await carregarValidacao();
+  // O corpus, o método e a execução do motor vivem no repositório — esta tela
+  // continua respondendo à rubrica sem banco. Só as seções que leem do Postgres
+  // ficam sem número, e dizem por quê em vez de exibir zero como se fosse medida.
+  const v = supabaseConfigurado() ? await carregarValidacao() : null;
   const cob = coberturaCorpus();
-  const t = v.tratamento;
+  const t = v?.tratamento ?? null;
 
   return (
     <>
@@ -181,112 +186,116 @@ export default async function ValidacaoPage() {
         pergunta="O pipeline com números da base, não um diagrama decorativo."
         icone={<Database size={14} />}
       >
-        <Card titulo="Pipeline de preparo" legenda="Números reais das transcrições já ingeridas">
-          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            <Numero valor={t.transcricoes.toLocaleString('pt-BR')} rotulo="transcrições ingeridas" />
-            <Numero valor={t.palavras.toLocaleString('pt-BR')} rotulo="palavras normalizadas" />
-            <Numero valor={t.turnos.toLocaleString('pt-BR')} rotulo="turnos diarizados" tom="accent" />
-            <Numero
-              valor={`~${t.sentencasEstimadas.toLocaleString('pt-BR')}`}
-              rotulo="sentenças segmentadas"
-            />
-            <Numero
-              valor={t.totalRedacoes.toLocaleString('pt-BR')}
-              rotulo="entidades anonimizadas"
-              tom={t.totalRedacoes > 0 ? 'health' : 'neutro'}
-            />
-          </div>
+        {t === null ? (
+          <SemBanco oQueApareceAqui="Aqui o pipeline de preparo aparece com números da base: transcrições ingeridas, palavras normalizadas, turnos diarizados, entidades anonimizadas por tipo e a distribuição do Índice de Confiabilidade." />
+        ) : (
+          <Card titulo="Pipeline de preparo" legenda="Números reais das transcrições já ingeridas">
+            <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              <Numero valor={t.transcricoes.toLocaleString('pt-BR')} rotulo="transcrições ingeridas" />
+              <Numero valor={t.palavras.toLocaleString('pt-BR')} rotulo="palavras normalizadas" />
+              <Numero valor={t.turnos.toLocaleString('pt-BR')} rotulo="turnos diarizados" tom="accent" />
+              <Numero
+                valor={`~${t.sentencasEstimadas.toLocaleString('pt-BR')}`}
+                rotulo="sentenças segmentadas"
+              />
+              <Numero
+                valor={t.totalRedacoes.toLocaleString('pt-BR')}
+                rotulo="entidades anonimizadas"
+                tom={t.totalRedacoes > 0 ? 'health' : 'neutro'}
+              />
+            </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <div>
-              <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">
-                Anonimização LGPD, por tipo
-              </p>
-              {t.redacoesPorTipo.length === 0 ? (
-                <p className="text-[11.5px] leading-relaxed text-ink-dim">
-                  Nenhum dado sensível encontrado nas transcrições atuais. O mascaramento roda em toda
-                  ingestão; o corpus sintético simplesmente não traz CPF ou telefone em toda amostra.
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <div>
+                <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">
+                  Anonimização LGPD, por tipo
                 </p>
-              ) : (
-                <ul className="space-y-1 text-[11.5px]">
-                  {t.redacoesPorTipo.map((r) => (
-                    <li key={r.tipo} className="flex items-center justify-between gap-2">
-                      <span className="text-ink-dim">{TIPO_REDACAO[r.tipo] ?? r.tipo}</span>
-                      <Mono>{r.quantidade}</Mono>
+                {t.redacoesPorTipo.length === 0 ? (
+                  <p className="text-[11.5px] leading-relaxed text-ink-dim">
+                    Nenhum dado sensível encontrado nas transcrições atuais. O mascaramento roda em toda
+                    ingestão; o corpus sintético simplesmente não traz CPF ou telefone em toda amostra.
+                  </p>
+                ) : (
+                  <ul className="space-y-1 text-[11.5px]">
+                    {t.redacoesPorTipo.map((r) => (
+                      <li key={r.tipo} className="flex items-center justify-between gap-2">
+                        <span className="text-ink-dim">{TIPO_REDACAO[r.tipo] ?? r.tipo}</span>
+                        <Mono>{r.quantidade}</Mono>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-2 rounded-md border border-line bg-surface-2 px-3 py-2 text-[11px] leading-relaxed text-ink-faint">
+                  A máscara tem exatamente o mesmo comprimento do trecho mascarado. Sem isso, todo offset
+                  depois do primeiro CPF andaria e a evidência apontaria para o lugar errado da
+                  transcrição. O valor original nunca é gravado — só o tipo e a posição.
+                </p>
+              </div>
+
+              <div>
+                <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">
+                  Distribuição do Índice de Confiabilidade
+                </p>
+                <div className="mb-2 flex items-baseline gap-2">
+                  <Mono
+                    tom={
+                      t.confiabilidadeMedia >= 75 ? 'health' : t.confiabilidadeMedia >= 50 ? 'warn' : 'risk'
+                    }
+                    className="text-2xl"
+                  >
+                    {t.confiabilidadeMedia}
+                  </Mono>
+                  <span className="text-[11px] text-ink-faint">média da base</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {t.distribuicao.map((f) => {
+                    const total = t.transcricoes || 1;
+                    const pct = Math.round((f.quantidade / total) * 100);
+                    return (
+                      <li key={f.faixa}>
+                        <div className="flex items-center justify-between gap-2 text-[11.5px]">
+                          <span className="text-ink-dim">{f.faixa}</span>
+                          <Mono tom={f.tom}>{f.quantidade}</Mono>
+                        </div>
+                        <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-3">
+                          <div
+                            className={`h-full rounded-full ${
+                              f.tom === 'health' ? 'bg-health' : f.tom === 'warn' ? 'bg-warn' : 'bg-risk'
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="mt-2 text-[11px] leading-relaxed text-ink-faint">
+                  {t.comDiarizacao} transcrição(ões) com marcação de falante e {t.semDiarizacao} sem. Onde
+                  não há marcação, as métricas de conversa ficam nulas — o sistema não inventa turno para
+                  preencher gráfico.
+                </p>
+              </div>
+            </div>
+
+            {t.avisosMaisComuns.length > 0 ? (
+              <div className="mt-4 border-t border-line pt-3">
+                <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">
+                  Avisos de qualidade mais frequentes
+                </p>
+                <ul className="space-y-1">
+                  {t.avisosMaisComuns.map((a) => (
+                    <li key={a.aviso} className="flex items-start justify-between gap-3 text-[11.5px]">
+                      <span className="text-ink-dim">{a.aviso}</span>
+                      <Mono tom="warn" className="shrink-0">
+                        {a.ocorrencias}×
+                      </Mono>
                     </li>
                   ))}
                 </ul>
-              )}
-              <p className="mt-2 rounded-md border border-line bg-surface-2 px-3 py-2 text-[11px] leading-relaxed text-ink-faint">
-                A máscara tem exatamente o mesmo comprimento do trecho mascarado. Sem isso, todo offset
-                depois do primeiro CPF andaria e a evidência apontaria para o lugar errado da
-                transcrição. O valor original nunca é gravado — só o tipo e a posição.
-              </p>
-            </div>
-
-            <div>
-              <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">
-                Distribuição do Índice de Confiabilidade
-              </p>
-              <div className="mb-2 flex items-baseline gap-2">
-                <Mono
-                  tom={
-                    t.confiabilidadeMedia >= 75 ? 'health' : t.confiabilidadeMedia >= 50 ? 'warn' : 'risk'
-                  }
-                  className="text-2xl"
-                >
-                  {t.confiabilidadeMedia}
-                </Mono>
-                <span className="text-[11px] text-ink-faint">média da base</span>
               </div>
-              <ul className="space-y-1.5">
-                {t.distribuicao.map((f) => {
-                  const total = t.transcricoes || 1;
-                  const pct = Math.round((f.quantidade / total) * 100);
-                  return (
-                    <li key={f.faixa}>
-                      <div className="flex items-center justify-between gap-2 text-[11.5px]">
-                        <span className="text-ink-dim">{f.faixa}</span>
-                        <Mono tom={f.tom}>{f.quantidade}</Mono>
-                      </div>
-                      <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-3">
-                        <div
-                          className={`h-full rounded-full ${
-                            f.tom === 'health' ? 'bg-health' : f.tom === 'warn' ? 'bg-warn' : 'bg-risk'
-                          }`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-              <p className="mt-2 text-[11px] leading-relaxed text-ink-faint">
-                {t.comDiarizacao} transcrição(ões) com marcação de falante e {t.semDiarizacao} sem. Onde
-                não há marcação, as métricas de conversa ficam nulas — o sistema não inventa turno para
-                preencher gráfico.
-              </p>
-            </div>
-          </div>
-
-          {t.avisosMaisComuns.length > 0 ? (
-            <div className="mt-4 border-t border-line pt-3">
-              <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">
-                Avisos de qualidade mais frequentes
-              </p>
-              <ul className="space-y-1">
-                {t.avisosMaisComuns.map((a) => (
-                  <li key={a.aviso} className="flex items-start justify-between gap-3 text-[11.5px]">
-                    <span className="text-ink-dim">{a.aviso}</span>
-                    <Mono tom="warn" className="shrink-0">
-                      {a.ocorrencias}×
-                    </Mono>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </Card>
+            ) : null}
+          </Card>
+        )}
       </Secao>
 
       {/* c) ANÁLISE */}
@@ -342,7 +351,13 @@ export default async function ValidacaoPage() {
             legenda="Toda correção humana no briefing é registrada com o valor antes e depois"
             acoes={<UserCheck size={14} className="text-ink-faint" />}
           >
-            {v.correcoes.total === 0 ? (
+            {v === null ? (
+              <p className="text-[11.5px] leading-relaxed text-ink-dim">
+                As intervenções humanas ficam gravadas no Postgres, e sem banco configurado não há o que
+                ler. Com as variáveis no ambiente, esta tabela mostra por campo quantas vezes o humano
+                confirmou e quantas corrigiu o que o motor propôs — a medida da própria falibilidade.
+              </p>
+            ) : v.correcoes.total === 0 ? (
               <p className="text-[11.5px] leading-relaxed text-ink-dim">
                 Nenhuma correção registrada ainda. Quando o vendedor confirma ou corrige um campo do
                 briefing, a intervenção entra aqui e a taxa de correção por campo passa a ser exibida —
@@ -398,7 +413,7 @@ export default async function ValidacaoPage() {
           <MetricasAoVivo />
         </div>
 
-        {v.execucoes.length > 0 ? (
+        {v !== null && v.execucoes.length > 0 ? (
           <div className="mt-4">
             <Card
               titulo="Histórico de execuções"

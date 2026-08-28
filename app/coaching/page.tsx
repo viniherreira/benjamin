@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { GraduationCap, MessageCircleQuestion, Mic, TrendingUp } from 'lucide-react';
 import { Badge, BotaoLink, Card, EmptyState, Mono, PageHeader, type Tom } from '@/components/ui';
 import { Sparkline } from '@/components/cliente-ui';
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseConfigurado, supabaseServer } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 import type { AnalysisRow, MeetingRow } from '@/lib/supabase/database.types';
 import type { Bant, MetricasConversa } from '@/lib/analysis';
 
@@ -39,6 +40,18 @@ function leituraTalkRatio(v: number): string {
 }
 
 export default async function CoachingPage() {
+  if (!supabaseConfigurado()) {
+    return (
+      <>
+        <PageHeader
+          titulo="Coaching"
+          descricao="A métrica que a TOTVS pediu por escrito: o vendedor está ouvindo mais do que falando?"
+        />
+        <SemBanco oQueApareceAqui="Aqui a tela mede a conversa, não o cliente: talk-to-listen ratio contra a faixa de referência, número e tipo de perguntas, maior monólogo e cobertura BANT, com evolução ao longo do tempo." />
+      </>
+    );
+  }
+
   const sb = supabaseServer();
 
   const [reunioesRes, analisesRes] = await Promise.all([

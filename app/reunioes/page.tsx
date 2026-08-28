@@ -1,6 +1,7 @@
 import { MessagesSquare } from 'lucide-react';
 import { BotaoLink, EmptyState, PageHeader } from '@/components/ui';
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseConfigurado, supabaseServer } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,23 @@ type LinhaReuniao = {
 };
 
 export default async function ReunioesPage() {
+  if (!supabaseConfigurado()) {
+    return (
+      <>
+        <PageHeader
+          titulo="Reuniões"
+          descricao="Todas as transcrições analisadas, com sentimento, interesse, talk ratio e confiabilidade do dado."
+          acoes={
+            <BotaoLink href="/reunioes/nova" variante="primario">
+              Nova reunião
+            </BotaoLink>
+          }
+        />
+        <SemBanco oQueApareceAqui="Aqui fica a lista das transcrições analisadas, com título, cliente, data, tipo, sentimento, interesse, talk ratio e índice de confiabilidade." />
+      </>
+    );
+  }
+
   const sb = supabaseServer();
   const { data, error } = await sb
     .from('meetings')

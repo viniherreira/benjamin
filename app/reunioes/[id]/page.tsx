@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, Cpu, Download, ShieldAlert, Timer, TriangleAlert } from 'lucide-react';
 import { Badge, PageHeader } from '@/components/ui';
 import { carregarBriefing } from '@/lib/supabase/persistencia';
+import { supabaseConfigurado } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 import { Briefing } from './briefing';
 import { BotaoReprocessar } from './reprocessar';
 import { ProvedorCorrecao } from './correcao';
@@ -26,6 +28,15 @@ const TIPO_LABEL: Record<string, string> = {
 const MOTOR_LABEL: Record<string, string> = { rules: 'regras', hybrid: 'híbrido', llm: 'LLM' };
 
 export default async function BriefingPage({ params }: { params: Promise<{ id: string }> }) {
+  if (!supabaseConfigurado()) {
+    return (
+      <>
+        <PageHeader titulo="Briefing" descricao="A análise da reunião, item por item, com a evidência ao lado." />
+        <SemBanco oQueApareceAqui="Aqui fica o briefing da reunião: oportunidades, retenção, ecossistema, persona, sentimento por aspecto, budget e próximos passos — cada item clicável, destacando o trecho de origem na transcrição." />
+      </>
+    );
+  }
+
   const { id } = await params;
 
   const dados = await carregarBriefing(id);

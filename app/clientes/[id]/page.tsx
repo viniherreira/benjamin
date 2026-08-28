@@ -25,6 +25,8 @@ import {
   tomInteresse,
 } from '@/components/cliente-ui';
 import { visaoDoCliente } from '@/lib/memory';
+import { supabaseConfigurado } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,6 +67,15 @@ const UNIDADE: Record<string, string> = {
 };
 
 export default async function ClientePage({ params }: { params: Promise<{ id: string }> }) {
+  if (!supabaseConfigurado()) {
+    return (
+      <>
+        <PageHeader titulo="Cliente" descricao="A memória da conta, reunião a reunião." />
+        <SemBanco oQueApareceAqui="Aqui fica a ficha da conta: health score explicado fator a fator, linha do tempo das reuniões, objeções recorrentes, ecossistema TOTVS mapeado e o que ficou pendente." />
+      </>
+    );
+  }
+
   const { id } = await params;
 
   const v = await visaoDoCliente(id);

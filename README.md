@@ -72,6 +72,10 @@ OPENAI_API_KEY=                # opcional — ativa transcrição de áudio
 **O app funciona só com as duas primeiras.** Faltando as opcionais, cada
 funcionalidade degrada com mensagem explícita — nunca com simulação.
 
+Sem nenhuma variável o app ainda sobe: toda tela abre dizendo o que falta e o que
+apareceria ali, as rotas de API respondem `503` com o motivo, e `/validacao`
+continua rodando o motor sobre o corpus — a medição não depende do banco.
+
 ### Popular a base
 
 ```bash

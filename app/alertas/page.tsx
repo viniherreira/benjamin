@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { Bell, Building2, MessagesSquare } from 'lucide-react';
 import { Badge, BotaoLink, EmptyState, Mono, PageHeader, type Tom } from '@/components/ui';
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseConfigurado, supabaseServer } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 import type { AlertRow, CustomerRow } from '@/lib/supabase/database.types';
 
 export const dynamic = 'force-dynamic';
@@ -80,6 +81,18 @@ export default async function AlertasPage({
 }: {
   searchParams: Promise<{ sev?: string; pub?: string }>;
 }) {
+  if (!supabaseConfigurado()) {
+    return (
+      <>
+        <PageHeader
+          titulo="Alertas"
+          descricao="O que o sistema encontrou e para quem interessa — com a evidência que originou cada aviso e o valor em jogo."
+        />
+        <SemBanco oQueApareceAqui="Aqui ficam os alertas nascidos das análises: risco de churn na banda alta, concorrente ativo na conversa, oportunidade com alta probabilidade e budget declarado — cada um com a citação que o originou." />
+      </>
+    );
+  }
+
   const { sev = 'todas', pub = 'todos' } = await searchParams;
 
   const sb = supabaseServer();

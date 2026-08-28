@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { Building2, Radar, TrendingDown, TrendingUp } from 'lucide-react';
 import { Badge, BotaoLink, Card, EmptyState, Mono, PageHeader, type Tom } from '@/components/ui';
 import { carregarRadar, NOME_UNIDADE, type Periodo } from '@/lib/pains';
+import { supabaseConfigurado } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,6 +43,18 @@ export default async function RadarPage({
 }: {
   searchParams: Promise<{ seg?: string; uni?: string; per?: string }>;
 }) {
+  if (!supabaseConfigurado()) {
+    return (
+      <>
+        <PageHeader
+          titulo="Radar de dores"
+          descricao="Quais dores estão surgindo com mais frequência em toda a base — a pergunta que nenhuma reunião isolada responde."
+        />
+        <SemBanco oQueApareceAqui="Aqui as dores ditas pelos clientes aparecem agrupadas por tópico e ranqueadas por frequência, com filtro por segmento, unidade de negócio e período." />
+      </>
+    );
+  }
+
   const sp = await searchParams;
   const periodo = (Number(sp.per ?? 0) as Periodo) ?? 0;
 

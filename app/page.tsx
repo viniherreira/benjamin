@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import { Badge, BotaoLink, Card, EmptyState, Mono, PageHeader, StatTile } from '@/components/ui';
 import { tomChurn, tomHealth } from '@/components/cliente-ui';
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseConfigurado, supabaseServer } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 import { carregarTorre } from '@/lib/torre';
 import { diasEntre } from '@/lib/memory';
 import type { ActionItemRow, AlertRow, MeetingRow } from '@/lib/supabase/database.types';
@@ -28,6 +29,18 @@ const fmtBRL = (n: number | null) => (n == null ? '—' : BRL.format(n));
 const fmtData = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
 
 export default async function DashboardPage() {
+  if (!supabaseConfigurado()) {
+    return (
+      <>
+        <PageHeader
+          titulo="Dashboard"
+          descricao="Suas reuniões, suas contas e o que precisa da sua atenção hoje."
+        />
+        <SemBanco oQueApareceAqui="Aqui ficam seus indicadores da semana, as contas por health score, as tarefas atrasadas e os alertas dos seus clientes." />
+      </>
+    );
+  }
+
   const sb = supabaseServer();
   const t = await carregarTorre();
 

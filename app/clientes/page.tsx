@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { Building2 } from 'lucide-react';
 import { Badge, BotaoLink, EmptyState, Mono, PageHeader } from '@/components/ui';
 import { tomHealth } from '@/components/cliente-ui';
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseConfigurado, supabaseServer } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 import { diasEntre } from '@/lib/memory';
 import type { CustomerRow, MeetingRow } from '@/lib/supabase/database.types';
 
@@ -30,6 +31,18 @@ const ESTAGIO: Record<string, string> = {
 type Objecao = { categoria?: string; texto?: string; resolvida?: boolean };
 
 export default async function ClientesPage() {
+  if (!supabaseConfigurado()) {
+    return (
+      <>
+        <PageHeader
+          titulo="Clientes"
+          descricao="A memória de cada conta: health score, estágio, objeções em aberto e valor de contrato."
+        />
+        <SemBanco oQueApareceAqui="Aqui fica a lista de contas com health score colorido, estágio no funil, número de reuniões, último contato, objeções abertas e valor de contrato." />
+      </>
+    );
+  }
+
   const sb = supabaseServer();
 
   const [clientesRes, reunioesRes] = await Promise.all([

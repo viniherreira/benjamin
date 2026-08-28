@@ -183,3 +183,7 @@ Quando aparecer, apontar três coisas — **nesta ordem**:
 - **Deploy fora do ar:** `npm run validar` no terminal produz a tabela de
   métricas completa — a seção (d) da demo funciona sem navegador.
 - **Base vazia:** `POST /api/seed` repopula o arco e o corpus. É idempotente.
+- **Banco fora do ar:** o app sobe do mesmo jeito. Cada tela diz que falta a
+  configuração e o que apareceria ali, sem número inventado, e a seção (d) —
+  **Rodar validação agora** em `/validacao` — continua executando o motor sobre o
+  corpus, porque a medição não depende do Postgres.

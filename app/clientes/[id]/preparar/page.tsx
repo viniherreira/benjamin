@@ -15,6 +15,8 @@ import {
 import { Badge, Mono, PageHeader, type Tom } from '@/components/ui';
 import { tomInteresse } from '@/components/cliente-ui';
 import { visaoDoCliente } from '@/lib/memory';
+import { supabaseConfigurado } from '@/lib/supabase/server';
+import { SemBanco } from '@/components/sem-banco';
 import { montarPreparacao, preparacaoEmTexto } from '@/lib/preparacao';
 import { AcoesPreparacao } from './acoes';
 
@@ -45,6 +47,18 @@ function Linha({
 }
 
 export default async function PrepararPage({ params }: { params: Promise<{ id: string }> }) {
+  if (!supabaseConfigurado()) {
+    return (
+      <>
+        <PageHeader
+          titulo="Preparar reunião"
+          descricao="O briefing de 2 minutos antes de entrar na próxima conversa com a conta."
+        />
+        <SemBanco oQueApareceAqui="Aqui fica a preparação montada a partir do histórico: o que ficou pendente, as objeções que voltaram, as perguntas a fazer e os riscos a evitar." />
+      </>
+    );
+  }
+
   const { id } = await params;
 
   const v = await visaoDoCliente(id);
