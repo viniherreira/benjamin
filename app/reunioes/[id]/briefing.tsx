@@ -22,6 +22,7 @@ import {
 import type { AnalysisResult, BusinessUnit, Evidence } from '@/lib/analysis';
 import { Badge, Mono, type Tom } from '@/components/ui';
 import { ControleCorrecao } from './correcao';
+import { PainelEnriquecimento } from './enriquecer';
 
 /* ------------------------------------------------------------------ *
  * Formatação
@@ -67,9 +68,11 @@ type Sel = { start: number; end: number } | null;
  * ------------------------------------------------------------------ */
 
 export function Briefing({
+  meetingId,
   transcricao,
   analise,
 }: {
+  meetingId: string;
   transcricao: string;
   analise: AnalysisResult;
 }) {
@@ -97,6 +100,8 @@ export function Briefing({
       {/* Coluna do briefing */}
       <div className="min-w-0 space-y-4">
         <Resumo analise={analise} />
+
+        <PainelEnriquecimento meetingId={meetingId} onSelecionar={selecionar} />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <ScoreCard

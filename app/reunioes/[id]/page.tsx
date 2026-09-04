@@ -121,7 +121,7 @@ export default async function BriefingPage({ params }: { params: Promise<{ id: s
           ) : null}
 
           <ProvedorCorrecao analiseId={analiseId}>
-            <Briefing transcricao={transcricao} analise={analise} />
+            <Briefing meetingId={reuniao.id} transcricao={transcricao} analise={analise} />
           </ProvedorCorrecao>
         </>
       ) : (

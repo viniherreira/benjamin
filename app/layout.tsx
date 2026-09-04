@@ -31,9 +31,14 @@ export const metadata: Metadata = {
 const SCRIPT_TEMA = `(function(){try{var t=localStorage.getItem('insightiq-tema');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}}catch(e){}})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // O motor LLM só liga se houver chave. Sem ela, o sistema roda 100% em regras
-  // e a interface diz isso — a regra 10.4 exige degradar com elegância e ser explícito.
-  const motor = process.env.ANTHROPIC_API_KEY ? 'híbrido' : 'regras';
+  // O motor de ANÁLISE é sempre determinístico — toda extração que carrega
+  // evidência sai de regras, com ou sem chave de LLM. O que a chave liga é o
+  // enriquecimento opcional, sob demanda, por reunião.
+  //
+  // Antes esta linha exibia "híbrido" só por existir uma chave no ambiente,
+  // enquanto nada de LLM rodava. Rótulo que não corresponde ao que executou é
+  // exatamente o tipo de coisa que este produto se propõe a não fazer.
+  const motor = 'regras';
 
   return (
     <html lang="pt-BR" data-theme="dark" suppressHydrationWarning>

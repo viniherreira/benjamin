@@ -65,7 +65,7 @@ Variáveis de ambiente:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=      # obrigatória
 SUPABASE_SERVICE_ROLE_KEY=     # obrigatória — nunca vai para o cliente
-ANTHROPIC_API_KEY=             # opcional — ativa o motor híbrido
+GEMINI_API_KEY=                # opcional — ativa o enriquecimento por LLM
 OPENAI_API_KEY=                # opcional — ativa transcrição de áudio
 ```
 
@@ -126,6 +126,21 @@ Um teste de invariante verifica em todo o corpus que
 `texto.slice(start, end) === quote`. É por isso que clicar num item do briefing
 destaca o trecho exato — e é a razão de a anonimização preservar o comprimento do
 texto (`###.###.###-##`, não `[CPF]`).
+
+### O LLM entra contido, não no volume
+
+O enriquecimento por LLM existe e é **opcional, por reunião** — um botão no
+briefing. O caminho padrão continua determinístico, então os R$ 0,00 por análise
+e o p95 de 3,7 ms seguem valendo para 100% do volume.
+
+A contenção é estrutural, não uma promessa: cada observação do modelo só aparece
+se a citação que a sustenta for encontrada literalmente na transcrição, e o que
+não ancora é descartado e **contado na tela**. O resumo gerado é prosa e não tem
+como ser ancorado num trecho único, então fica rotulado ao lado do resumo
+extrativo, sem substituir nada e sem alimentar campo do briefing.
+
+Medido na camada gratuita, mesma reunião, três execuções: 22,4 s, 4,5 s e 25,8 s.
+A fila do provedor é imprevisível e a interface diz isso enquanto gera.
 
 ### IH + IA
 

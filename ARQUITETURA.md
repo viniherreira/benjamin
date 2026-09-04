@@ -69,7 +69,16 @@ precisa ser previsível e auditável — produtos, valores, prazos, concorrentes
 métricas de conversa. O LLM, quando houver chave, enriquece resumo, nuance e
 recomendações.
 
-O provider é plugável (`lib/analysis/llm/`), o contrato de saída é o mesmo, e o
+Isso está implementado em `lib/analysis/llm/` (provedor Gemini, camada gratuita)
+e é **sob demanda, por reunião** — botão no briefing, nunca no caminho do volume.
+A contenção é estrutural: cada observação do modelo só é exibida se a citação que
+ela alega existir for encontrada literalmente na transcrição; o que não ancora é
+descartado e contado na tela. O resumo gerado é prosa, não tem como ser ancorado
+num trecho único, então aparece rotulado ao lado do resumo extrativo — nunca no
+lugar dele, e nunca alimentando campo do briefing.
+
+O provider é plugável (`lib/analysis/llm/gemini.ts` é o único arquivo que sabe
+qual provedor responde), o contrato de saída é o mesmo, e o
 rodapé de cada briefing declara qual motor rodou. Sem chave, o sistema roda
 100% em regras **sem degradar a interface** — nenhuma tela fica vazia por falta
 de credencial.
