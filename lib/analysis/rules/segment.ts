@@ -51,13 +51,53 @@ function apagar(texto: string, inicio: number, fim: number): string {
  * Diarização
  * ------------------------------------------------------------------ */
 
-// "Ana:", "ANA SILVA:", "[Ana]", "João (TOTVS):"
-const RE_ROTULO = /^[ \t>-]*(?:\[([^\]\n]{2,45})\]|([\p{Lu}][\p{L}.\- ]{1,40}?)(?:\s*\([^)\n]{1,30}\))?)\s*:[ \t]/u;
+/*
+ * Rótulo de falante.
+ *
+ * Formatos aceitos: "Ana:", "ANA SILVA:", "[Ana]", "João (TOTVS):" e
+ * "Fernanda — TOTVS:" — com o texto na mesma linha OU na linha seguinte.
+ *
+ * As duas últimas tolerâncias não são capricho. A regex anterior exigia
+ * dois-pontos seguidos de espaço na MESMA linha e não aceitava travessão no
+ * nome; uma transcrição colada no formato que Meet, Teams e ata de reunião
+ * produzem — rótulo sozinho na linha, cargo após travessão — era lida como
+ * texto corrido, sem nenhum turno. Sem turno não há talk ratio, não há
+ * pergunta contada e o sentimento não consegue separar a fala do cliente da
+ * fala do vendedor. Um detalhe de parsing derrubava metade da análise.
+ *
+ * O cargo depois de travessão ou hífen cercado de espaços é descartado do nome,
+ * senão "Ricardo — Diretor Financeiro:" e "Ricardo:" viram dois falantes
+ * distintos e o agrupamento de turnos se parte no meio da reunião.
+ */
+const RE_ROTULO =
+  /^[ \t>-]*(?:\[([^\]\n]{2,45})\]|([\p{Lu}][\p{L}.'’ ]{1,40}?)(?:(?:\s*[—–]\s*|\s+-\s+)[^:\n]{1,40})?(?:\s*\([^)\n]{1,30}\))?)\s*:(?:[ \t]|$)/u;
 
 const PALAVRAS_NAO_FALANTE = new Set([
   'obs', 'nota', 'ps', 'atenção', 'atencao', 'resumo', 'obrigado', 'olha', 'veja',
   'exemplo', 'importante', 'link', 'http', 'https', 'obs.', 'pauta', 'agenda',
 ]);
+
+/** Partículas de nome próprio que legitimamente vêm em minúscula. */
+const PARTICULAS = new Set(['de', 'da', 'do', 'dos', 'das', 'e', 'del', 'di']);
+
+/**
+ * Parece nome de pessoa?
+ *
+ * Nome próprio vem capitalizado ou em caixa alta. Frase comum não vem — e é
+ * frase comum que produz falso falante quando o rótulo pode ocupar a linha
+ * inteira: "Os principais pontos são: baixa percepção de retorno..." casava a
+ * estrutura de rótulo e criava um participante que nunca existiu na reunião.
+ */
+function pareceNome(bruto: string): boolean {
+  const palavras = bruto.split(/\s+/).filter(Boolean);
+  if (palavras.length === 0 || palavras.length > 3) return false;
+  if (bruto === bruto.toUpperCase()) return true; // ANA SILVA
+  return palavras.every((p, i) => {
+    if (i > 0 && PARTICULAS.has(p.toLowerCase())) return true;
+    const primeira = p[0] ?? '';
+    return primeira === primeira.toUpperCase() && primeira !== primeira.toLowerCase();
+  });
+}
 
 type RotuloAchado = { falante: string; inicioRotulo: number; inicioTexto: number };
 
@@ -72,7 +112,7 @@ function acharRotulos(textoSeguro: string): RotuloAchado[] {
       const chave = bruto.toLowerCase().replace(/[.:]/g, '');
       const palavras = chave.split(/\s+/).filter(Boolean).length;
 
-      if (bruto && palavras <= 4 && !PALAVRAS_NAO_FALANTE.has(chave)) {
+      if (bruto && palavras <= 4 && !PALAVRAS_NAO_FALANTE.has(chave) && pareceNome(bruto)) {
         achados.push({
           falante: bruto,
           inicioRotulo: offset,
@@ -324,15 +364,57 @@ export function preparar(bruto: string): Preparado {
       });
     }
 
-    // Desempate: com dois falantes e só um identificado, o outro é o oposto.
-    if (falantes.length === 2) {
-      const [a, b] = falantes as [FalanteResumo, FalanteResumo];
-      if (a.lado !== 'desconhecido' && b.lado === 'desconhecido') {
-        b.lado = a.lado === 'vendedor' ? 'cliente' : 'vendedor';
-        b.confianca = 0.3;
-      } else if (b.lado !== 'desconhecido' && a.lado === 'desconhecido') {
-        a.lado = b.lado === 'vendedor' ? 'cliente' : 'vendedor';
-        a.confianca = 0.3;
+    /*
+     * Desempate.
+     *
+     * O critério anterior só funcionava com exatamente dois falantes. Reunião
+     * comercial real costuma ter três — um vendedor e dois do lado do cliente —
+     * e nesse caso ninguém era classificado, o talk ratio voltava nulo e o
+     * sentimento perdia o filtro de fala do cliente.
+     *
+     * Dois passos, do mais forte para o mais fraco.
+     */
+
+    // 1. Quem pergunta é quem conduz. Numa call de descoberta o vendedor
+    //    pergunta e o cliente responde; é um sinal estrutural, que não depende
+    //    de o falante ter usado alguma expressão específica do léxico.
+    if (!falantes.some((f) => f.lado === 'vendedor')) {
+      const taxa: { chave: string; valor: number }[] = [];
+      for (const [chave, lista] of porFalante) {
+        const comPergunta = lista.filter((t) => t.texto.includes('?')).length;
+        taxa.push({ chave, valor: lista.length > 0 ? comPergunta / lista.length : 0 });
+      }
+      taxa.sort((a, b) => b.valor - a.valor);
+
+      const lider = taxa[0];
+      const segundo = taxa[1];
+      // Exige destaque real: metade dos turnos com pergunta e o dobro do segundo.
+      if (lider && segundo && lider.valor >= 0.5 && lider.valor >= segundo.valor * 2) {
+        const f = falantes.find((x) => x.nome.toLowerCase() === lider.chave);
+        if (f && f.lado === 'desconhecido') {
+          f.lado = 'vendedor';
+          f.confianca = 0.4;
+        }
+      }
+    }
+
+    // 2. Propagação. Achado o vendedor, quem sobra está do outro lado da mesa —
+    //    vale para dois falantes e para dez.
+    const vendedores = falantes.filter((f) => f.lado === 'vendedor');
+    const desconhecidos = falantes.filter((f) => f.lado === 'desconhecido');
+
+    if (vendedores.length > 0) {
+      for (const f of desconhecidos) {
+        f.lado = 'cliente';
+        f.confianca = 0.3;
+      }
+    } else if (falantes.length === 2 && desconhecidos.length === 1) {
+      // Só um lado identificado e dois falantes: o outro é o oposto.
+      const conhecido = falantes.find((f) => f.lado !== 'desconhecido');
+      const alvo = desconhecidos[0] as FalanteResumo;
+      if (conhecido) {
+        alvo.lado = conhecido.lado === 'vendedor' ? 'cliente' : 'vendedor';
+        alvo.confianca = 0.3;
       }
     }
 

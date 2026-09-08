@@ -235,6 +235,24 @@ export function calcularChurn(e: EntradaChurn): ResultadoChurn {
   const pesoTotal = partes.reduce((s, p) => s + p.peso, 0);
   const bruto = pesoTotal > 0 ? partes.reduce((s, p) => s + p.valor * p.peso, 0) / pesoTotal : 0;
 
+  /*
+   * Zero por ausência de sinal não é o mesmo que conta saudável.
+   *
+   * Sem nenhum sinal detectado e sem histórico, a nota é 0 — e a tela exibia
+   * esse 0 com a mesma cara de um 0 calculado sobre uma conta que realmente
+   * está bem. São coisas diferentes: a primeira é "não medi", a segunda é
+   * "medi e está tudo certo". O produto inteiro se apoia em não confundir as
+   * duas, então o fator entra explícito em vez de a diferença sumir.
+   */
+  if (fatores.length === 0) {
+    fatores.push({
+      label: e.memoria
+        ? 'Nenhum sinal de risco reconhecido nesta conversa'
+        : 'Nenhum sinal reconhecido, e sem histórico do cliente: a nota olhou só esta reunião',
+      delta: 0,
+    });
+  }
+
   return { churn_risk: Math.round(limitar(bruto, 0, 100)), fatores };
 }
 

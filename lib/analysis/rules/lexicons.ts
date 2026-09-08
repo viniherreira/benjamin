@@ -230,11 +230,58 @@ export const SINAIS_CHURN: { padrao: string; peso: number; rotulo: string }[] = 
   { padrao: 'nao entregaram o que prometeram', peso: 22, rotulo: 'Promessa não cumprida' },
   { padrao: 'vou escalar', peso: 18, rotulo: 'Vai escalar internamente' },
   { padrao: 'ta insustentavel', peso: 20, rotulo: 'Situação insustentável' },
+
+  /*
+   * Ampliação medida em DEV-13.
+   *
+   * A lista acima cobria a frase exata e nada em volta dela. Numa conversa de
+   * não-renovação declarada, nove afirmações explícitas de saída passaram sem
+   * disparar um sinal sequer: o léxico tinha "nao vamos renovar" e o cliente
+   * disse "não PRETENDEMOS renovar"; tinha "avaliando alternativas" e ele disse
+   * "avaliação DAS alternativas". Faltava uma palavra e o risco sumia.
+   *
+   * Os padrões daqui para baixo cobrem família de expressão, não frase literal.
+   */
+  { padrao: 'nao (?:vamos|pretendemos|pretendo|planejamos|iremos) renovar', peso: 30, rotulo: 'Não pretende renovar' },
+  { padrao: '(?:tendencia|intencao) (?:e|de) (?:sair|substituir|trocar)', peso: 28, rotulo: 'Intenção declarada de sair' },
+  { padrao: '(?:substituir|trocar) (?:o |a |de )?(?:fornecedor|sistema|erp|solucao|plataforma)', peso: 26, rotulo: 'Fala em substituir o fornecedor' },
+  { padrao: '(?:escolher|definir|buscar) (?:o )?proximo fornecedor', peso: 28, rotulo: 'Já escolhe o próximo fornecedor' },
+  { padrao: 'avali\\w+ (?:de |das |as |outras )?(?:alternativas|opcoes)', peso: 22, rotulo: 'Avaliando alternativas' },
+  { padrao: '(?:conversamos|conversando|falamos|falando) com (?:dois|tres|outros|outras|mais de um) ?(?:fornecedores|empresas|players)', peso: 24, rotulo: 'Conversando com outros fornecedores' },
+  { padrao: 'nao (?:tenho|temos) confianca', peso: 18, rotulo: 'Perdeu a confiança' },
+  { padrao: '(?:custo|preco|investimento) nao compensa', peso: 20, rotulo: 'Custo não compensa' },
+  { padrao: 'nao faz sentido continuar pagando', peso: 24, rotulo: 'Não vê sentido em continuar pagando' },
+  { padrao: 'demora (?:muito )?(?:para|pra) (?:conseguir|resolver|responder|retornar)', peso: 14, rotulo: 'Suporte lento' },
+  { padrao: '(?:mesmo problema|mesma coisa) (?:varias|muitas|tres) vezes', peso: 16, rotulo: 'Problema repetido' },
+  // Abandono na prática: o contrato existe, o produto não é usado. Estava
+  // classificado como objeção técnica, o que era erro de categoria — voltar
+  // para a planilha não é uma objeção a fechar, é o cliente já tendo saído.
+  { padrao: '(?:continuam|continua|voltaram|voltamos|voltou) (?:usando |pro |para o |pra )?(?:excel|planilha)', peso: 20, rotulo: 'Equipe voltou para a planilha' },
 ];
 
 /* ================================================================== *
  * Objeções
  * ================================================================== */
+
+/*
+ * Recusa explícita de compra, dita pelo cliente.
+ *
+ * Existe porque o motor transformava recusa em oportunidade: o vendedor citava
+ * três produtos, o cliente respondia "não neste momento" a cada um, e o
+ * briefing exibia oportunidade de 50% para todos. Pipeline construído sobre um
+ * "não" é pior que pipeline nenhum — vira previsão de receita que ninguém vai
+ * fechar.
+ */
+export const RECUSA_COMPRA = [
+  'nao (?:tenho|temos) interesse',
+  'sem interesse em (?:contratar|comprar|adquirir)',
+  'nao quero (?:comprar|contratar|adquirir|mais produtos|mais tecnologia)',
+  'nao pretendo (?:comprar|contratar|adquirir)',
+  'nao vamos (?:comprar|contratar|adquirir)',
+  'nao (?:e|esta) (?:uma )?prioridade',
+  'nao faz sentido (?:contratar|comprar|continuar pagando)',
+  'nao neste momento',
+];
 
 export const OBJECOES: { categoria: CategoriaObjecao; padroes: string[] }[] = [
   {
@@ -258,6 +305,18 @@ export const OBJECOES: { categoria: CategoriaObjecao; padroes: string[] }[] = [
       'ainda (?:esta|ta) fora',
       'passa (?:do|o) (?:teto|limite)',
       'reajuste (?:veio )?acima',
+      /*
+       * DEV-13 trouxe cinco frases de preço e nenhuma casava. A ampliação foi
+       * medida em duas versões e ficou só o que generaliza.
+       *
+       * Fora, de propósito: "custo-beneficio" (aparece tanto elogiando quanto
+       * criticando), "pagamos bastante" e "nao sentimos que estamos recebendo
+       * valor" — formulações moldadas na frase daquela amostra. Mantê-las subia
+       * o F1 de dev e derrubava o de holdout, que é a definição de decorar em
+       * vez de generalizar.
+       */
+      '(?:custo|preco|investimento) nao compensa',
+      'preco (?:pesa|pesou)',
     ],
   },
   {
@@ -286,6 +345,15 @@ export const OBJECOES: { categoria: CategoriaObjecao; padroes: string[] }[] = [
       'a proposta (?:deles|dele) (?:veio|e)',
       'o numero deles e (?:bem )?menor',
       'acharam mais simples que a de voces',
+      // "mais barato" existia; "Uma delas é mais barata" passava batido porque
+      // a flexão de gênero não estava prevista.
+      // Correção de flexão, não ampliação: "mais barato" já existia e "Uma
+      // delas é mais barata" passava batido só pelo gênero.
+      'mais barat[oa]',
+      // Concorrente sem nome. O motor pontuava ameaça a partir da lista de
+      // concorrentes conhecidos, então "já conversamos com dois fornecedores" —
+      // que é avaliação ativa e decisiva — valia zero em todos os campos.
+      '(?:conversamos|conversando|falamos|falando) com (?:dois|tres|outros|outras|mais de um) ?(?:fornecedores|empresas|players)',
     ],
   },
   {
@@ -301,6 +369,16 @@ export const OBJECOES: { categoria: CategoriaObjecao; padroes: string[] }[] = [
       'incompativel',
       'sera que integra',
       'e integrado (?:mesmo|ne)',
+      // Objeção de produto que aparece como crítica de usabilidade: a
+      // funcionalidade existe, mas não é usável.
+      //
+      // "continuam usando Excel" e "acaba virando processo manual" estavam aqui
+      // e saíram: o primeiro é abandono do produto (sinal de churn), o segundo é
+      // dor de processo. Nenhum dos dois é objeção — objeção é o que o cliente
+      // levanta CONTRA fechar. Classificar dor como objeção infla o campo com
+      // item da categoria errada.
+      'nem sempre e simples',
+      'nao e simples para o usuario',
     ],
   },
   {
@@ -602,7 +680,15 @@ export const ATENUADORES: Record<string, number> = {
   meio: 0.6, pouco: 0.5, levemente: 0.5, razoavelmente: 0.7, relativamente: 0.7,
 };
 
-export const NEGADORES = ['nao', 'nunca', 'jamais', 'nenhum', 'nenhuma', 'nada', 'sem'];
+/*
+ * `ninguem` e `nem` entraram porque a ausência deles invertia o sinal, não
+ * porque alguma amostra pediu: "abri chamado e ninguem resolveu" pontuava
+ * +0.8 (positivo) pelo `resolveu`, enquanto "abri chamado e nao resolveu"
+ * pontuava −0.8. São negadores do português; a lista estava incompleta.
+ */
+export const NEGADORES = [
+  'nao', 'nunca', 'jamais', 'nenhum', 'nenhuma', 'nada', 'sem', 'ninguem', 'nem',
+];
 
 /* ================================================================== *
  * Aspectos — âncoras para o sentimento decomposto

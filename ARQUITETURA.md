@@ -58,7 +58,7 @@ Comercial **em tempo real**. Essa pergunta tem consequência arquitetural.
 | Critério | Regras (escolhido) | LLM |
 |---|---|---|
 | Custo por análise | R$ 0,00 | por token, × 10.000/dia |
-| Latência p95 medida | 3,7 ms | centenas de ms a segundos |
+| Latência p95 medida | 9–15 ms | centenas de ms a segundos |
 | Determinismo | mesma entrada → mesma saída | varia entre execuções |
 | Explicabilidade | rastreável até a regra | requer confiar na saída |
 | Generalização | limitada ao léxico | alta |
@@ -86,7 +86,7 @@ de credencial.
 ### O que essa decisão custa
 
 Está medido e reportado em [VALIDACAO.md](VALIDACAO.md): sentimento em 4 classes
-fica em 0,533 de acurácia e o interest score tem MAE de 18,4 pontos. São
+fica em 0,548 de acurácia e o interest score tem MAE de 18 pontos. São
 exatamente os campos onde um LLM tende a ir melhor. A escolha foi trocar
 precisão nesses dois campos por custo zero, latência de milissegundos e
 auditabilidade nos campos que movem dinheiro.
@@ -148,9 +148,9 @@ a torre de controle leiam sem recomputar todo o histórico a cada request.
 
 | Métrica | Valor |
 |---|---|
-| Latência p50 | 1,75 ms |
-| Latência p95 | 3,7 ms |
-| Throughput, 1 processo | 31.573 análises/min |
+| Latência p50 | ~5 ms |
+| Latência p95 | 9–15 ms |
+| Throughput, 1 processo | ~8.000 análises/min |
 | Throughput, 4 workers | ~126.000 análises/min |
 | Custo de API | R$ 0,00 |
 

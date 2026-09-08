@@ -109,7 +109,7 @@ ordem abaixo — trocar de aba é mais rápido e menos arriscado que navegar.
 > "Quase todo time mapeia só ERP. Fluxo de caixa é Techfin. Previsibilidade de
 > pipeline é RD Station."
 
-3. **Escala do motor:** p95 em 3,7 ms, throughput de 31 mil análises/minuto,
+3. **Escala do motor:** p95 entre 9 e 15 ms, throughput de ~8 mil análises/minuto,
    custo de API **R$ 0,00**.
 
 > "As 10.000 reuniões por dia levam cerca de 19 segundos num processo."
@@ -146,8 +146,8 @@ Quando aparecer, apontar três coisas — **nesta ordem**:
 - **Cobertura de evidência: 100%.** *"Nenhum item sem citação rastreável."*
 - **Falso positivo nas amostras sem sinal: zero.** *"Um sistema que acha
   oportunidade em toda conversa é ruído."*
-- **A matriz de churn**, que mostra o erro: *"Das 6 amostras de risco alto, o
-  motor pegou 2. Falso negativo é o erro caro num produto de retenção, e está
+- **A matriz de churn**, que mostra o erro: *"Das 7 amostras de risco alto, o
+  motor pegou 3. Falso negativo é o erro caro num produto de retenção, e está
   aqui na tela, não escondido."*
 
 4. Fechar apontando o **teste de overfitting** e a tabela **IH + IA**:
@@ -168,7 +168,7 @@ Quando aparecer, apontar três coisas — **nesta ordem**:
 
 | Pergunta | Resposta |
 |---|---|
-| "Vocês usam qual LLM?" | Nenhum, por decisão. Motor determinístico: R$ 0,00 por análise, p95 de 3,7 ms e cada campo auditável. O provider de LLM está no contrato e entra sem refatorar — o trade-off está medido em VALIDACAO.md. |
+| "Vocês usam qual LLM?" | O motor de análise é determinístico por decisão: R$ 0,00 por análise, p95 em milissegundos e cada campo auditável até a regra. O LLM existe como enriquecimento opcional por reunião (Gemini), com a mesma regra de evidência — o que ele afirma sem citação localizável na transcrição é descartado antes da tela. O trade-off está medido em VALIDACAO.md. |
 | "E se a IA errar?" | O sistema assume que erra. Toda extração mostra a evidência, todo campo é confirmável ou corrigível pelo vendedor, e a taxa de correção é exibida na tela de validação. |
 | "Por que o corpus real está vazio?" | Porque as gravações ainda não foram feitas. O protocolo está escrito e o pipeline pronto. Inventar amostra "real" seria fraudar o item que a rubrica pede primeiro. |
 | "Isso escala para 10.000/dia?" | 31 mil análises por minuto medidas num processo. 10.000/dia levam ~19 segundos. O gargalo é I/O, não o motor. |

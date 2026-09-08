@@ -354,4 +354,226 @@ Henrique: Não, por enquanto não.`,
       talk_ratio_vendedor: [0.85, 1],
     }),
   },
+
+  /*
+   * DEV-13 — churn declarado, em formato de transcrição colada.
+   *
+   * Entrou depois das outras doze e por um motivo diferente: as doze anteriores
+   * foram escritas para cobrir cenários, esta foi escrita porque o motor errou
+   * nela. É uma conversa de não-renovação explícita que o motor lia como
+   * churn 0 e ainda gerava oportunidade de 50% para um produto recusado.
+   *
+   * Vai para DEV, não para holdout, e a razão precisa estar escrita: nós
+   * analisamos esta amostra em detalhe antes de corrigir o motor. Amostra
+   * inspecionada não serve mais de teste cego — colocá-la no holdout inflaria a
+   * métrica que existe justamente para desconfiar de nós mesmos.
+   *
+   * O formato é o ponto: rótulo do falante sozinho na linha, cargo depois de
+   * travessão. As doze amostras anteriores usam "Nome: texto" na mesma linha —
+   * o único formato que o parser aceitava. Por isso o corpus inteiro passava
+   * verde enquanto uma transcrição colada do mundo real perdia toda a
+   * diarização. A linha "Os principais pontos são:" fica de propósito: ela
+   * casava a estrutura de rótulo e criava um falante que não existe.
+   */
+  {
+    codigo: 'DEV-13',
+    cenario: 'renovacao_em_risco',
+    particao: 'dev',
+    cliente: 'Grupo Alpha',
+    texto: `Fernanda — TOTVS:
+
+Bom dia, Ricardo e Juliana. O objetivo da nossa conversa hoje é entender como está a experiência de vocês com o TOTVS Protheus, quais são as principais dificuldades e se existe alguma forma de melhorar esse cenário antes da renovação.
+
+Ricardo — Diretor Financeiro:
+
+Vou ser bem direto para não perdermos tempo: nossa decisão praticamente já está tomada.
+
+Não pretendemos renovar o Protheus.
+
+Fernanda:
+
+Você poderia me explicar o que levou vocês a essa decisão?
+
+Ricardo:
+
+Custo-benefício.
+
+Nós pagamos bastante pelo sistema e não sentimos que estamos recebendo esse valor de volta.
+
+Hoje temos Protheus, Excel, outras ferramentas e vários processos manuais.
+
+Não faz sentido continuar pagando por uma solução que não resolve tudo o que precisamos.
+
+Juliana — Gerente de Operações:
+
+A equipe está cansada.
+
+Temos muita coisa que deveria ser simples, mas acaba virando processo manual.
+
+Exportamos dados, montamos planilhas e fazemos controles fora do sistema.
+
+Fernanda:
+
+Você consegue estimar quanto tempo a equipe perde com isso?
+
+Juliana:
+
+Mais de 20 horas por semana.
+
+Mas o maior problema é que, mesmo quando existe alguma funcionalidade, nem sempre é simples para o usuário.
+
+Ricardo:
+
+E eu não quero ouvir novamente que precisamos fazer treinamento.
+
+Depois de alguns meses, os usuários continuam usando Excel.
+
+Fernanda:
+
+Vocês já estão avaliando outras soluções?
+
+Ricardo:
+
+Sim.
+
+Já conversamos com dois fornecedores.
+
+Uma delas é mais barata e parece mais fácil de usar.
+
+Fernanda:
+
+Posso entender então que, se conseguíssemos resolver os problemas de relatórios e processos manuais, existiria uma possibilidade de reconsiderar a decisão?
+
+Ricardo:
+
+Hoje, sinceramente, não.
+
+Já estamos muito avançados na avaliação das alternativas.
+
+Fernanda:
+
+Mesmo assim, gostaria de apresentar algumas possibilidades do ecossistema TOTVS.
+
+Podemos avaliar o TOTVS Analytics para os indicadores gerenciais, o TOTVS Fluig para automação de processos e o Protheus Insights para análises utilizando inteligência artificial.
+
+Ricardo:
+
+Fernanda, não me leve a mal, mas eu não tenho interesse em contratar mais produtos.
+
+Estamos tentando reduzir complexidade e vocês estão me apresentando mais soluções.
+
+Eu não quero comprar mais tecnologia.
+
+Fernanda:
+
+E se conseguíssemos demonstrar que essas soluções poderiam reduzir os custos operacionais?
+
+Ricardo:
+
+Eu já ouvi essa promessa antes.
+
+Hoje não tenho confiança de que isso vai acontecer.
+
+Fernanda:
+
+Vocês teriam interesse em participar de uma demonstração do Protheus Insights?
+
+Ricardo:
+
+Não neste momento.
+
+Fernanda:
+
+E uma demonstração do TOTVS Fluig?
+
+Ricardo:
+
+Também não.
+
+Se quisermos avaliar isso no futuro, podemos conversar.
+
+Hoje não é prioridade.
+
+Fernanda:
+
+Existe algum cenário em que vocês considerariam permanecer com a TOTVS?
+
+Ricardo:
+
+Somente se a proposta financeira fosse muito diferente.
+
+Hoje o preço pesa bastante.
+
+Mas não é apenas preço.
+
+Mesmo se vocês reduzirem o valor, continuamos com os problemas operacionais.
+
+Então não adianta simplesmente oferecer desconto.
+
+Juliana:
+
+Também existe uma questão de confiança.
+
+Quando a equipe tem um problema, muitas vezes demora para conseguir uma solução.
+
+Às vezes temos que explicar o mesmo problema várias vezes.
+
+Fernanda:
+
+Se fizéssemos um plano de recuperação de 90 dias, com acompanhamento próximo e indicadores de resultado, vocês estariam dispostos a testar?
+
+Ricardo:
+
+Não sei.
+
+Nossa prioridade agora é escolher o próximo fornecedor.
+
+Não é melhorar o relacionamento com o atual.
+
+Fernanda:
+
+Então, para registrar corretamente: hoje vocês estão em processo ativo de avaliação de fornecedores concorrentes e a intenção principal é substituir o Protheus na próxima renovação.
+
+Ricardo:
+
+Sim.
+
+Precisaríamos receber uma proposta muito convincente, tanto financeiramente quanto operacionalmente.
+
+Fernanda:
+
+Então vou registrar que o cenário atual é de alto risco de churn.
+
+Os principais pontos são: baixa percepção de retorno sobre o investimento, excesso de processos manuais, insatisfação com suporte, avaliação ativa de concorrentes e intenção de substituição do fornecedor.
+
+Ricardo:
+
+Está correto.
+
+Pode enviar a proposta.
+
+Mas, como falei, hoje nossa tendência é sair.
+
+Juliana:
+
+Eu também vejo dessa forma.`,
+    /*
+     * O concorrente é real e ativo — "já conversamos com dois fornecedores" —
+     * mas o cliente nunca o nomeia. O gabarito não tem como registrar isso, e
+     * essa limitação é um achado: o motor pontua ameaça por nome de concorrente,
+     * então concorrência anônima vale zero mesmo sendo decisiva.
+     */
+    gold: gold({
+      produtos: [{ nome: 'TOTVS Protheus', status: 'em_uso' }],
+      objecoes: ['preco', 'concorrencia', 'tecnica'],
+      dores: ['custo', 'processo_manual', 'suporte', 'usabilidade'],
+      churn_claro: true,
+      upsell_claro: false,
+      sentimento: 'negativo',
+      poder_decisao: 'decisor',
+      interesse: [0, 20],
+      churn_risco: 'alto',
+      talk_ratio_vendedor: [0.35, 0.6],
+    }),
+  },
 ];

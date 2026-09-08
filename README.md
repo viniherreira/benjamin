@@ -107,7 +107,7 @@ Resultados da última execução, metodologia e **análise honesta dos erros** e
 
 ### O motor é determinístico
 
-Sem LLM por padrão. Custo de **R$ 0,00 por análise**, latência p95 de **3,7 ms**,
+Sem LLM por padrão. Custo de **R$ 0,00 por análise**, latência p95 de **9–15 ms**,
 saída idêntica para a mesma entrada e cada campo auditável até a regra que o
 produziu.
 
@@ -131,7 +131,7 @@ texto (`###.###.###-##`, não `[CPF]`).
 
 O enriquecimento por LLM existe e é **opcional, por reunião** — um botão no
 briefing. O caminho padrão continua determinístico, então os R$ 0,00 por análise
-e o p95 de 3,7 ms seguem valendo para 100% do volume.
+e o p95 de milissegundos seguem valendo para 100% do volume.
 
 A contenção é estrutural, não uma promessa: cada observação do modelo só aparece
 se a citação que a sustenta for encontrada literalmente na transcrição, e o que

@@ -28,6 +28,7 @@ import {
   MARCA_TERCEIRO,
   OBJECOES,
   PRODUTOS,
+  RECUSA_COMPRA,
   SINAIS_CHURN,
   SINAIS_CROSS_BU,
   SUPERIOR_ACIMA,
@@ -126,8 +127,25 @@ const CONDICIONAL_FRACO = [
   'algum dia',
 ];
 
+/**
+ * O cliente recusou explicitamente comprar nesta conversa?
+ *
+ * Vale para a reunião inteira, não para a sentença: o vendedor apresenta os
+ * produtos num turno e a recusa vem depois, em outro. Uma janela de contexto
+ * jamais alcançaria — e era exatamente aí que "Também não." virava oportunidade.
+ */
+export function recusouComprar(prep: Preparado): boolean {
+  for (const padrao of RECUSA_COMPRA) {
+    for (const c of casar(prep, padrao)) {
+      if (ehFalaDoCliente(prep, c.inicio)) return true;
+    }
+  }
+  return false;
+}
+
 export function extrairProdutos(prep: Preparado): ProdutoTotvs[] {
   const achados: ProdutoTotvs[] = [];
+  const recusou = recusouComprar(prep);
 
   /*
    * Supressão de sobreposição: "RD Station Marketing" casa com três padrões —
@@ -185,10 +203,13 @@ export function extrairProdutos(prep: Preparado): ProdutoTotvs[] {
       } else if (algumPadrao(ctx, AVALIANDO) || algumPadrao(largo, AVALIANDO)) {
         status = 'avaliando';
         confianca = 0.75;
-      } else if (algumPadrao(ctx, OPORTUNIDADE_CTX) || algumPadrao(largo, OPORTUNIDADE_CTX)) {
+      } else if (
+        !recusou &&
+        (algumPadrao(ctx, OPORTUNIDADE_CTX) || algumPadrao(largo, OPORTUNIDADE_CTX))
+      ) {
         status = 'oportunidade';
         confianca = 0.75;
-      } else if (algumPadrao(largo, DOR_CTX)) {
+      } else if (!recusou && algumPadrao(largo, DOR_CTX)) {
         // Dor no tema do produto sem posse: o cliente precisa e ainda não tem.
         status = 'oportunidade';
         confianca = 0.7;

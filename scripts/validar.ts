@@ -106,8 +106,19 @@ for (const [nome, valor, alvo] of alvos) {
   p(`${nome.padEnd(34)} ${String(valor).padStart(3)} / mín ${alvo}   ${valor >= alvo ? 'ok' : 'ABAIXO'}`);
 }
 
-// Aquecimento: a primeira execução carrega e otimiza o código, e mediria errado.
-rodar(CORPUS_SINTETICO.slice(0, 5));
+/*
+ * Aquecimento sobre o corpus INTEIRO, não sobre uma amostra dele.
+ *
+ * Aquecer com as cinco primeiras não bastava: elas são curtas e sem diarização
+ * densa, então os caminhos que uma transcrição longa exercita continuavam
+ * frios. Medido: a primeira análise da DEV-13 num processo novo leva 1.612 ms,
+ * a mediana das seguintes é 21,8 ms. Uma única amostra fria puxava a média do
+ * relatório de ~5 ms para ~28 ms e publicava como se fosse o custo por análise.
+ *
+ * O que interessa medir é o regime permanente — é ele que um servidor vive
+ * depois da primeira requisição, e é sobre ele que a projeção de escala fala.
+ */
+rodar(CORPUS_SINTETICO);
 
 const todos = rodar(CORPUS_SINTETICO);
 const dev = todos.filter((r) => r.particao === 'dev');
