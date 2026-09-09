@@ -181,11 +181,43 @@ export function analisarSentimento(prep: Preparado): ResultadoSentimento {
 
   const global = pesoGlobal > 0 ? limitar(somaGlobal / pesoGlobal, -1, 1) : 0;
 
-  const temPositivo = aspect_sentiment.some((a) => a.polarity === 'positivo') || clausulasPositivas > 0;
-  const temNegativo = aspect_sentiment.some((a) => a.polarity === 'negativo') || clausulasNegativas > 0;
+  /*
+   * "Misto" precisa de PROPORÇÃO, não de existência.
+   *
+   * A regra anterior era: existe alguma oração positiva e alguma negativa,
+   * então misto. Em texto curto isso funciona. Em transcrição real do desafio —
+   * mediana de 34 mil caracteres, uma hora e meia de conversa — sempre existe
+   * uma frase de cada lado, e o campo devolvia `misto` em 59 de 70 reuniões.
+   * Um campo que responde a mesma coisa em 84% dos casos não informa nada.
+   *
+   * Agora o lado minoritário precisa pesar de verdade: pelo menos duas orações
+   * e um quarto do total carregado. Abaixo disso, uma reclamação solta numa
+   * reunião boa não transforma a leitura inteira em ambígua.
+   */
+  const totalCarregado = clausulasPositivas + clausulasNegativas;
+  const minoritario = Math.min(clausulasPositivas, clausulasNegativas);
+  const proporcaoMinoritaria = totalCarregado > 0 ? minoritario / totalCarregado : 0;
+
+  /*
+   * O piso de duas orações vale só quando há amostra para isso.
+   *
+   * Exigir duas em qualquer caso derrubou a acurácia no corpus sintético de
+   * 0,548 para 0,419: numa conversa de dez frases, uma reclamação contra duas
+   * satisfações é contraste legítimo, e a regra a descartava. Em conversa de uma
+   * hora e meia, a mesma reclamação isolada não é.
+   */
+  const poucaCarga = totalCarregado <= 6;
+  const contrasteReal =
+    proporcaoMinoritaria >= 0.25 && (minoritario >= 2 || (poucaCarga && minoritario >= 1));
+
+  // Sem contraste proporcional, aspectos opostos ainda contam: são pontos
+  // ancorados num tema do léxico, e não carga solta espalhada pelo texto.
+  const aspectosOpostos =
+    aspect_sentiment.some((a) => a.polarity === 'positivo') &&
+    aspect_sentiment.some((a) => a.polarity === 'negativo');
 
   let sentiment: Sentimento;
-  if (temPositivo && temNegativo) sentiment = 'misto';
+  if (contrasteReal || aspectosOpostos) sentiment = 'misto';
   else if (global >= LIMIAR) sentiment = 'positivo';
   else if (global <= -LIMIAR) sentiment = 'negativo';
   else sentiment = 'neutro';

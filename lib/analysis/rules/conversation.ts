@@ -80,6 +80,20 @@ export function metricasConversa(prep: Preparado): MetricasConversa {
     return { ...METRICAS_VAZIAS, turn_count: 0 };
   }
 
+  /*
+   * Diarização picada pelo ASR: os turnos existem, mas não dá para dizer quais
+   * são do vendedor. Toda métrica que depende de lado volta nula.
+   *
+   * Medido no corpus real: das 23 reuniões em que o talk ratio era devolvido,
+   * 21 tinham mais de seis "falantes" e 17 devolviam ratio abaixo de 0,10 —
+   * 0,004 num caso. Aquilo tinha aparência de medição e era artefato de
+   * transcrição. A regra do produto já era não inventar turno para preencher
+   * gráfico; não inventar LADO é a mesma regra um passo adiante.
+   */
+  if (prep.diarizacaoFragmentada) {
+    return { ...METRICAS_VAZIAS, turn_count: prep.turnos.length };
+  }
+
   const turnos = prep.turnos;
   const vendedor = turnos.filter((t) => t.lado === 'vendedor');
   const cliente = turnos.filter((t) => t.lado === 'cliente');

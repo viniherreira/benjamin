@@ -64,7 +64,25 @@ export function avaliarQualidade(prep: Preparado): QualidadeTranscricao {
     warnings.push('Apenas um falante identificado numa reunião.');
   }
 
-  if (prep.temDiarizacao) {
+  /*
+   * Fragmentação do ASR pesa mais que qualquer outro defeito, e por muito tempo
+   * não pesava nada. Medido no corpus real do desafio: transcrições com 13 a 38
+   * "falantes" recebiam Índice de Confiabilidade 92 — a tela dizia que a
+   * matéria-prima estava ótima enquanto a diarização era ruído, e o briefing
+   * saía com a mesma cara de confiança de uma transcrição limpa.
+   *
+   * O desconto cresce com o excesso de falantes porque 8 é ruim e 38 é
+   * inutilizável, e um número só não distinguiria os dois.
+   */
+  if (prep.diarizacaoFragmentada) {
+    const excesso = speaker_count - 6;
+    const perda = Math.min(45, 15 + excesso * 2);
+    indice -= perda;
+    warnings.push(
+      `${speaker_count} falantes distintos: a diarização automática fragmentou a conversa. ` +
+        'Métricas que dependem de separar vendedor e cliente ficam indisponíveis.',
+    );
+  } else if (prep.temDiarizacao) {
     const semLado = prep.falantes.filter((f) => f.lado === 'desconhecido').length;
     if (semLado > 0) {
       indice -= 8;

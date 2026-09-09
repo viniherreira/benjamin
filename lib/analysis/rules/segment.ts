@@ -271,7 +271,22 @@ export type Preparado = {
    */
   podeFiltrarCliente: boolean;
   trechosInaudiveis: number;
+  /**
+   * A diarização veio picada pelo ASR?
+   *
+   * Transcrição automática de reunião longa costuma inventar falante: o corpus
+   * real do desafio traz mediana de 13 e máximo de 38 "locutores" distintos numa
+   * conversa comercial. Reunião de verdade tem duas a seis pessoas.
+   *
+   * Isso não é detalhe cosmético. Com falante picado, a divisão
+   * vendedor/cliente perde sentido e o talk ratio sai em 0,004 — número que
+   * parece medição e é ruído. Preferimos não responder a responder errado.
+   */
+  diarizacaoFragmentada: boolean;
 };
+
+/** Acima disto não é reunião com muita gente, é o ASR picando quem falou. */
+const LIMITE_FALANTES = 6;
 
 const contarPalavras = (s: string): number => (s.match(/[\p{L}\p{N}][\p{L}\p{N}'-]*/gu) ?? []).length;
 
@@ -440,6 +455,8 @@ export function preparar(bruto: string): Preparado {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
+  const diarizacaoFragmentada = temDiarizacao && falantes.length > LIMITE_FALANTES;
+
   return {
     textoSeguro,
     textoBusca,
@@ -449,7 +466,15 @@ export function preparar(bruto: string): Preparado {
     sentencas,
     falantes,
     temDiarizacao,
-    podeFiltrarCliente: temDiarizacao && falantes.some((f) => f.lado === 'cliente'),
+    /*
+     * Com falante picado pelo ASR, "esta frase é do cliente" deixa de ser uma
+     * afirmação sustentável. Melhor extrair sem atribuir dono do que atribuir
+     * dono errado — é a mesma regra que já vale quando não há diarização
+     * nenhuma.
+     */
+    podeFiltrarCliente:
+      temDiarizacao && !diarizacaoFragmentada && falantes.some((f) => f.lado === 'cliente'),
     trechosInaudiveis,
+    diarizacaoFragmentada,
   };
 }
