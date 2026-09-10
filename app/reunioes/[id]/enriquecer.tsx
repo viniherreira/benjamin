@@ -11,7 +11,7 @@ import { Badge, Mono } from '@/components/ui';
  * A separação visual é a mesma que existe no código: o que veio das regras tem
  * evidência obrigatória e move os números do produto; o que veio do modelo é
  * leitura adicional, marcada como gerada. Uma tela que misturasse os dois
- * destruiria a única garantia que o InsightIQ oferece.
+ * destruiria a única garantia que o Benjamin oferece.
  *
  * O que o modelo produziu e não pôde ser ancorado no texto aparece contado, não
  * escondido: é a medida da falibilidade dele, do mesmo jeito que a taxa de

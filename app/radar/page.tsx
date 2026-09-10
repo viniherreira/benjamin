@@ -137,19 +137,19 @@ export default async function RadarPage({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-line bg-surface p-4">
+            <div className="vidro rounded-xl p-4">
               <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
                 Sinais de dor
               </p>
               <p className="mt-2 font-mono text-2xl text-ink">{r.totalSinais}</p>
             </div>
-            <div className="rounded-lg border border-line bg-surface p-4">
+            <div className="vidro rounded-xl p-4">
               <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
                 Tópicos distintos
               </p>
               <p className="mt-2 font-mono text-2xl text-ink">{r.clusters.length}</p>
             </div>
-            <div className="rounded-lg border border-line bg-surface p-4">
+            <div className="vidro rounded-xl p-4">
               <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
                 Contas afetadas
               </p>
@@ -180,7 +180,7 @@ export default async function RadarPage({
           {/* Ranking */}
           <div className="mt-4">
             {r.clusters.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-line bg-surface/50 px-6 py-10 text-center">
+              <div className="vidro-sutil rounded-xl border border-dashed border-line-strong px-6 py-10 text-center">
                 <p className="text-[13px] font-semibold text-ink">Nenhuma dor com esse filtro</p>
                 <p className="mt-1 text-[12px] text-ink-dim">
                   <Link href="/radar" className="text-accent hover:underline">
@@ -191,7 +191,7 @@ export default async function RadarPage({
             ) : (
               <ul className="space-y-3">
                 {r.clusters.map((c, i) => (
-                  <li key={c.topico} className="rounded-lg border border-line bg-surface shadow-panel">
+                  <li key={c.topico} className="vidro rounded-xl">
                     <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
                       <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-3 font-mono text-[11px] text-ink-dim">
                         {i + 1}

@@ -1,11 +1,18 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Instrument_Sans, JetBrains_Mono } from 'next/font/google';
 import { Shell } from '@/components/shell';
 import './globals.css';
 
-const inter = Inter({
+/*
+  Instrument Sans no lugar do Inter. O Inter é a fonte padrão de todo painel de
+  SaaS existente — correta e sem rosto. A Instrument tem terminais mais secos e
+  um "a" de dois andares mais estreito, que aguenta o tracking largo do wordmark
+  sem virar caricatura. O mono continua: este é um produto de números, e número
+  fora de tabular-nums dança na tela quando o valor muda.
+*/
+const instrument = Instrument_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-instrument',
   display: 'swap',
 });
 
@@ -17,18 +24,19 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'InsightIQ — o ouro invisível de cada conversa',
-    template: '%s · InsightIQ',
+    default: 'Benjamin — o ouro invisível de cada conversa',
+    template: '%s · Benjamin',
   },
   description:
     'Analisa transcrições de reuniões e extrai oportunidades de venda, riscos de churn e o ecossistema TOTVS do cliente.',
 };
 
 /**
- * Aplica o tema salvo antes da primeira pintura, para não piscar branco.
- * O padrão é escuro; o claro é opt-in e fica no localStorage.
+ * Aplica o tema salvo antes da primeira pintura, para não piscar.
+ * O padrão agora é o claro — o vidro precisa de luz atrás dele — e o escuro é
+ * opt-in, guardado no localStorage.
  */
-const SCRIPT_TEMA = `(function(){try{var t=localStorage.getItem('insightiq-tema');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}}catch(e){}})()`;
+const SCRIPT_TEMA = `(function(){try{var t=localStorage.getItem('benjamin-tema');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}}catch(e){}})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   // O motor de ANÁLISE é sempre determinístico — toda extração que carrega
@@ -41,11 +49,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const motor = 'regras';
 
   return (
-    <html lang="pt-BR" data-theme="dark" suppressHydrationWarning>
+    <html lang="pt-BR" data-theme="light" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
       </head>
-      <body className={`${inter.variable} ${jetbrains.variable} font-sans antialiased`}>
+      <body className={`${instrument.variable} ${jetbrains.variable} font-sans antialiased`}>
         <Shell motor={motor}>{children}</Shell>
       </body>
     </html>

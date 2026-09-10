@@ -174,7 +174,7 @@ export default async function AlertasPage({
           </div>
 
           {alertas.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-line bg-surface/50 px-6 py-10 text-center">
+            <div className="vidro-sutil rounded-xl border border-dashed border-line-strong px-6 py-10 text-center">
               <p className="text-[13px] font-semibold text-ink">Nenhum alerta com esse filtro</p>
               <p className="mt-1 text-[12px] text-ink-dim">
                 Existem {todos.length} alerta(s) na base.{' '}
@@ -191,7 +191,7 @@ export default async function AlertasPage({
                 return (
                   <li
                     key={a.id}
-                    className={`rounded-lg border bg-surface p-4 shadow-panel ${
+                    className={`vidro-sutil rounded-xl border p-4 shadow-panel ${
                       a.severity === 'alta' ? 'border-risk/40' : 'border-line'
                     }`}
                   >

@@ -1,5 +1,5 @@
 /**
- * Contrato do motor de análise do InsightIQ.
+ * Contrato do motor de análise do Benjamin.
  *
  * Este arquivo é TypeScript puro: não conhece Next, não conhece Supabase, não
  * faz I/O. É o que torna o motor testável isoladamente e é o que alimenta a

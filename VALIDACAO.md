@@ -1,4 +1,4 @@
-# Validação — InsightIQ
+# Validação — Benjamin
 
 Como os textos foram **coletados, tratados e analisados**, e o que o motor acerta
 e erra. Todos os números deste documento vieram de `npm run validar`, executado

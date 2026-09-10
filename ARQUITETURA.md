@@ -1,4 +1,4 @@
-# Arquitetura — InsightIQ
+# Arquitetura — Benjamin
 
 Challenge FIAP × TOTVS 2026 — Inteligência Conversacional.
 

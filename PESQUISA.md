@@ -26,7 +26,7 @@ Data de acesso de todas as consultas: **25 de agosto de 2026**.
 empresa e praticamente se invertem. Citar só uma delas seria escolher o número
 que convém.
 
-**Como usamos isso no produto:** a faixa de referência do InsightIQ é
+**Como usamos isso no produto:** a faixa de referência do Benjamin é
 **35%–55%** de fala do vendedor, e a tela de Coaching declara explicitamente que
 é *parâmetro configurável do time, não regra*. A tela também diz que uma
 demonstração tem talk ratio naturalmente alto — o número sozinho não julga a
@@ -59,7 +59,7 @@ Salesforce, State of Sales, 6ª edição"**, sem detalhar percentuais de subcate
 (anotação, entrada de dados), que variam entre edições e não foram verificados na
 fonte primária.
 
-**Ligação com o produto:** o InsightIQ elimina a etapa de registro pós-reunião. A
+**Ligação com o produto:** o Benjamin elimina a etapa de registro pós-reunião. A
 Torre de Controle exibe **horas devolvidas ao time** com o parâmetro declarado na
 própria tela (12 minutos por reunião), e não como fato absoluto.
 

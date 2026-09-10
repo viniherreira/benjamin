@@ -127,7 +127,7 @@ export default async function CoachingPage() {
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-lg border border-line bg-surface p-4">
+        <div className="vidro rounded-xl p-4">
           <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
             Talk ratio médio
           </p>
@@ -140,21 +140,21 @@ export default async function CoachingPage() {
             faixa de referência {pct(FAIXA_IDEAL.min)}–{pct(FAIXA_IDEAL.max)}
           </p>
         </div>
-        <div className="rounded-lg border border-line bg-surface p-4">
+        <div className="vidro rounded-xl p-4">
           <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
             Perguntas por reunião
           </p>
           <p className="mt-2 font-mono text-2xl text-ink">{mediaPerguntas.toFixed(1)}</p>
           <p className="mt-1 text-[11px] text-ink-faint">{mediaAbertas.toFixed(1)} abertas em média</p>
         </div>
-        <div className="rounded-lg border border-line bg-surface p-4">
+        <div className="vidro rounded-xl p-4">
           <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
             Maior monólogo
           </p>
           <p className="mt-2 font-mono text-2xl text-ink">{Math.round(mediaMonologo)}</p>
           <p className="mt-1 text-[11px] text-ink-faint">palavras, média das reuniões</p>
         </div>
-        <div className="rounded-lg border border-line bg-surface p-4">
+        <div className="vidro rounded-xl p-4">
           <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
             Cobertura BANT
           </p>

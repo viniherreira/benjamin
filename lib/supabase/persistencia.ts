@@ -21,7 +21,7 @@ import type {
 import { carregarHistorico, consolidar, paraMemoriaDoMotor } from '@/lib/memory';
 
 /**
- * Camada de ESCRITA e leitura consolidada do InsightIQ.
+ * Camada de ESCRITA e leitura consolidada do Benjamin.
  *
  * Regras do produto que este módulo materializa:
  *  - Banco só pelo servidor (importa supabaseServer, que guarda contra o cliente).

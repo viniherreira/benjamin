@@ -9,7 +9,7 @@ import { AudioLines, Check, Loader2, Mic, Square, TriangleAlert, Upload } from '
  * A decisão de arquitetura do produto: o núcleo consome TEXTO, e a captação é
  * plugável. Estes dois componentes só produzem o texto — ele cai no mesmo campo
  * da aba "Colar texto" e segue exatamente o mesmo caminho de análise. É por isso
- * que dá para dizer, sem asterisco, que o InsightIQ é agnóstico à origem.
+ * que dá para dizer, sem asterisco, que o Benjamin é agnóstico à origem.
  */
 
 /* ------------------------------------------------------------------ *

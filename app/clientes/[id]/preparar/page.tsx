@@ -89,7 +89,7 @@ export default async function PrepararPage({ params }: { params: Promise<{ id: s
       />
 
       {semHistorico ? (
-        <div className="rounded-lg border border-dashed border-line bg-surface/50 px-6 py-12 text-center">
+        <div className="vidro-sutil rounded-xl border border-dashed border-line-strong px-6 py-12 text-center">
           <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-faint">
             <CalendarClock size={18} />
           </div>
@@ -109,7 +109,7 @@ export default async function PrepararPage({ params }: { params: Promise<{ id: s
       ) : (
         <div className="grid gap-4 lg:grid-cols-[1fr_minmax(300px,38%)]">
           {/* Situação */}
-          <section className="rounded-lg border border-line bg-surface p-4 shadow-panel">
+          <section className="vidro rounded-xl p-4">
             <h2 className="mb-1 text-[13px] font-semibold text-ink">Onde a conta está</h2>
             <p className="mb-3 text-[11px] text-ink-faint">
               Cada linha vem de reuniões analisadas — nada aqui foi digitado à mão.
@@ -190,7 +190,7 @@ export default async function PrepararPage({ params }: { params: Promise<{ id: s
 
           {/* Indicadores */}
           <aside className="space-y-4">
-            <div className="rounded-lg border border-line bg-surface p-4 shadow-panel">
+            <div className="vidro rounded-xl p-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">
