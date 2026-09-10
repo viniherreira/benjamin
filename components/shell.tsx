@@ -87,9 +87,10 @@ function AlternadorTema() {
 }
 
 /**
- * Botão de ação primária. É o único elemento do sistema que recebe o brilho
- * âmbar — se tudo brilha, nada brilha, e a única coisa que o usuário SEMPRE
- * pode fazer é trazer uma reunião nova para dentro.
+ * Botão de ação primária. É o único bloco de tinta chapada da interface — numa
+ * tela feita de vidro translúcido, opacidade total é o destaque mais forte
+ * disponível, e ele fica reservado para a única coisa que o usuário SEMPRE pode
+ * fazer: trazer uma reunião nova para dentro.
  */
 function BotaoNova({ compacto = false }: { compacto?: boolean }) {
   return (
@@ -152,11 +153,11 @@ export function Shell({ children, motor }: { children: ReactNode; motor: string 
                             : 'text-ink-dim hover:bg-surface-2 hover:text-ink'
                         }`}
                       >
-                        {/* brasa: marca a página atual sem precisar de mais cor */}
+                        {/* marcador na sangria: diz onde você está sem gastar cor */}
                         {ativo ? (
                           <span
                             aria-hidden
-                            className="absolute -left-3 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-accent-vivid shadow-glow"
+                            className="absolute -left-3 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-accent"
                           />
                         ) : null}
                         <Icone size={15} className="shrink-0" />

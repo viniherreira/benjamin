@@ -1,28 +1,21 @@
-'use client';
-
-import { useId } from 'react';
-
 /**
  * Marca do Benjamin.
  *
- * O símbolo é uma ficha âmbar com a onda vazada: a fala entra como três traços
- * de amplitude e sai como um ponto único — conversa vira dado. É a mesma ideia
- * da marca anterior, dita com quatro formas em vez de doze.
+ * Uma ficha sólida com a onda vazada: a fala entra como três traços de
+ * amplitude e sai como um ponto único — conversa vira dado.
  *
- * A ficha carrega a própria cor em vez de ler o token de tema, porque marca que
- * muda de cor conforme o fundo deixa de ser marca. É o único lugar do sistema
- * onde o âmbar incandescente aparece sozinho, e por isso ele brilha.
+ * A ficha lê `--ink` e a onda lê `--canvas`, então ela inverte junto com o
+ * tema. Antes a marca carregava a própria cor, o que fazia sentido enquanto era
+ * âmbar: âmbar aparece nos dois fundos. Tinta não — ficha preta sobre canvas
+ * preto é um buraco. Numa identidade monocromática a marca não pode ignorar o
+ * tema, porque a tinta dela É o tema.
  *
- * O id do gradiente vem do `useId` e não de uma constante. A marca é renderizada
- * duas vezes ao mesmo tempo — barra lateral e cabeçalho do mobile coexistem no
- * DOM, cada uma escondida na largura da outra — e com id fixo o segundo SVG
- * aponta para um gradiente que mora dentro de um `display:none`. O Chrome não
- * pinta esse gradiente, e no celular a ficha some: logo invisível, wordmark
- * órfão. Id único por instância resolve na raiz.
+ * Sem gradiente, some também o `id` de SVG que precisava ser único por
+ * instância (a barra lateral e o cabeçalho do mobile coexistem no DOM). Quatro
+ * formas chapadas não têm o que colidir, e o componente volta a ser renderizável
+ * no servidor.
  */
 export function Logo({ size = 28 }: { size?: number }) {
-  const gradiente = `bj-ficha-${useId()}`;
-
   return (
     <svg
       width={size}
@@ -33,34 +26,15 @@ export function Logo({ size = 28 }: { size?: number }) {
       aria-label="Benjamin"
       className="shrink-0"
     >
-      <defs>
-        <linearGradient id={gradiente} x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#FFB37A" />
-          <stop offset="0.55" stopColor="#FF8A3D" />
-          <stop offset="1" stopColor="#F26D1B" />
-        </linearGradient>
-      </defs>
-
-      <rect x="1" y="1" width="30" height="30" rx="9" fill={`url(#${gradiente})`} />
-      {/* aresta superior clara: o mesmo brilho interno que define o vidro */}
-      <rect
-        x="1.5"
-        y="1.5"
-        width="29"
-        height="29"
-        rx="8.5"
-        stroke="#FFFFFF"
-        strokeOpacity="0.38"
-        strokeWidth="1"
-      />
+      <rect x="1" y="1" width="30" height="30" rx="9" fill="var(--ink)" />
 
       {/* onda vazada: amplitude decrescente até virar ponto */}
-      <g stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" opacity="0.96">
+      <g stroke="var(--canvas)" strokeWidth="2.4" strokeLinecap="round">
         <path d="M9 10.5v11" />
         <path d="M14.5 13v6" />
         <path d="M20 14.75v2.5" />
       </g>
-      <circle cx="24.5" cy="16" r="1.6" fill="#FFFFFF" />
+      <circle cx="24.5" cy="16" r="1.6" fill="var(--canvas)" />
     </svg>
   );
 }

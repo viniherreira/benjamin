@@ -4,119 +4,133 @@
   Benjamin — sistema de cor.
   Toda cor tem significado. Nada aqui é decorativo.
 
-    accent  âmbar    → navegação, foco, ação primária, marca, saída do motor
-    health  verde    → saúde da conta e pipeline, dessaturado
-    risk    vermelho → churn e receita em risco, dessaturado
-    warn    grafite  → atenção e baixa confiabilidade — peso, não cor
+    ink     preto/branco → navegação, foco, ação primária, marca, saída do motor
+    health  verde        → saúde da conta e pipeline, dessaturado
+    risk    vermelho     → churn e receita em risco, dessaturado
+    warn    grafite      → atenção e baixa confiabilidade — peso, não cor
 
-  A paleta anterior tinha seis cores competindo por atenção. Com seis sinais
-  cromáticos ao mesmo tempo, nenhum é sinal: a tela inteira grita. Agora existe
-  UMA cor de marca e DUAS de decisão. Atenção virou peso tipográfico, porque
-  "dado de baixa confiabilidade" não é emergência — é ressalva.
+  A INTERFACE NÃO TEM COR. Botão, item ativo, foco, marca e número em destaque
+  são preto no claro e branco no escuro. A única cor do produto vive ATRÁS do
+  vidro: uma atmosfera fria e difusa que o `backdrop-filter` captura e devolve
+  borrada na borda dos painéis.
+
+  Isso inverte de onde vem o interesse visual. Num tema com acento cromático, o
+  vidro é moldura e a cor é o assunto. Aqui o vidro É o assunto: ele só se
+  distingue do fundo porque há luz colorida para ele filtrar. Tirar a atmosfera
+  não deixa o tema mais sóbrio — deixa o vidro invisível.
+
+  Verde e vermelho sobrevivem porque carregam decisão, não estilo: health score,
+  pipeline, churn, receita em risco. `warn` não é cor, é grafite — "dado de
+  baixa confiabilidade" é ressalva, e gastar alarme nela é gastar o alarme que
+  o churn precisa.
 
   O tema claro é o padrão: o vidro precisa de luz atrás dele. O escuro é opt-in
   e troca só os valores abaixo — nenhum componente conhece o tema, todos leem as
   variáveis.
 
-  Sobre contraste: `accent` é o âmbar ESCURO, seguro para texto (5,4:1 sobre o
-  canvas). `accent-vivid` é o âmbar incandescente, que só aparece onde não
-  carrega leitura — brilho, preenchimento, marca, gradiente. Trocar um pelo
-  outro em texto reprova em acessibilidade, e por isso são dois tokens.
+  `accent` e `accent-vivid` continuam existindo como dois tokens porque cerca de
+  mil usos no código apontam para eles. Agora ambos são tinta neutra: `accent` é
+  a cor de texto e preenchimento, `accent-vivid` é a de aresta e foco. Manter os
+  nomes é o que permite trocar a paleta inteira sem editar tela por tela.
 */
 
 :root,
 [data-theme='light'] {
-  --canvas: #fafaf8;
-  --canvas-deep: #f2f1ed;
-  --surface: rgb(255 255 255 / 0.72);
+  --canvas: #f3f4f8;
+  --canvas-deep: #e9ebf1;
+  --surface: rgb(255 255 255 / 0.76);
   --surface-solid: #ffffff;
-  --surface-2: rgb(246 244 240 / 0.82);
-  --surface-3: #ebe9e3;
-  --line: rgb(15 14 12 / 0.09);
-  --line-strong: rgb(15 14 12 / 0.18);
+  --surface-2: rgb(244 245 248 / 0.82);
+  --surface-3: #e9ebf0;
+  --line: rgb(12 14 22 / 0.09);
+  --line-strong: rgb(12 14 22 / 0.18);
 
   --ink: #0a0a0b;
-  --ink-dim: #55524c;
-  --ink-faint: #75716a;
+  --ink-dim: #4e525c;
+  --ink-faint: #686d7a;
 
-  --accent: #b4470d;
-  --accent-vivid: #ff8a3d;
-  --accent-soft: #fff1e6;
-  --ai: #b4470d;
-  --ai-soft: #fff1e6;
+  --accent: #0a0a0b;
+  --accent-vivid: #0a0a0b;
+  --accent-soft: rgb(12 14 22 / 0.06);
+  --ai: #0a0a0b;
+  --ai-soft: rgb(12 14 22 / 0.06);
   --health: #2e7d5b;
   --health-soft: #e3f3eb;
-  --warn: #57534e;
-  --warn-soft: #efede8;
+  --warn: #52565f;
+  --warn-soft: #edeef2;
   --risk: #be3f32;
   --risk-soft: #fce9e6;
-  --gold: #ff8a3d;
+  --gold: #0a0a0b;
 
   --glass-highlight: rgb(255 255 255 / 0.9);
-  --glass-blur: blur(20px) saturate(170%);
+  --glass-blur: blur(22px) saturate(180%);
 
   /*
-    Três camadas: contato, elevação e — a última — a sombra âmbar difusa que faz
-    o painel parecer iluminado por trás em vez de recortado com Photoshop.
+    Três camadas: contato, elevação e — a última — uma difusa fria, que faz o
+    painel parecer apoiado sobre a atmosfera em vez de recortado sobre ela.
   */
   --shadow:
-    0 1px 2px rgb(24 18 10 / 0.04),
-    0 12px 32px -14px rgb(24 18 10 / 0.16),
-    0 24px 60px -30px rgb(255 138 61 / 0.28);
+    0 1px 2px rgb(12 14 22 / 0.05),
+    0 12px 32px -14px rgb(12 14 22 / 0.15),
+    0 28px 64px -32px rgb(64 84 170 / 0.24);
   --shadow-lift:
-    0 2px 4px rgb(24 18 10 / 0.05),
-    0 18px 44px -16px rgb(24 18 10 / 0.2),
-    0 32px 80px -34px rgb(255 138 61 / 0.4);
-  --glow: 0 0 40px rgb(255 138 61 / 0.18);
+    0 2px 4px rgb(12 14 22 / 0.06),
+    0 18px 44px -16px rgb(12 14 22 / 0.19),
+    0 36px 84px -36px rgb(64 84 170 / 0.34);
+  --glow: 0 6px 22px -6px rgb(12 14 22 / 0.34);
 
-  --atmosfera-1: rgb(255 138 61 / 0.13);
-  --atmosfera-2: rgb(255 138 61 / 0.06);
-  --grao: 0.03;
+  /* A única cor do produto. Fria, diluída, e só no fundo. */
+  --atmosfera-1: rgb(99 132 255 / 0.24);
+  --atmosfera-2: rgb(164 128 255 / 0.19);
+  --atmosfera-3: rgb(70 200 220 / 0.15);
+  --grao: 0.028;
 }
 
 [data-theme='dark'] {
-  --canvas: #0a0a0c;
-  --canvas-deep: #060607;
-  --surface: rgb(255 255 255 / 0.045);
-  --surface-solid: #131316;
-  --surface-2: rgb(255 255 255 / 0.07);
-  --surface-3: rgb(255 255 255 / 0.11);
+  --canvas: #08090c;
+  --canvas-deep: #050609;
+  --surface: rgb(255 255 255 / 0.05);
+  --surface-solid: #121318;
+  --surface-2: rgb(255 255 255 / 0.075);
+  --surface-3: rgb(255 255 255 / 0.115);
   --line: rgb(255 255 255 / 0.1);
   --line-strong: rgb(255 255 255 / 0.2);
 
-  --ink: #f2f2f0;
-  --ink-dim: #a8a49c;
-  --ink-faint: #7c7871;
+  --ink: #f2f3f5;
+  --ink-dim: #a3a7b2;
+  --ink-faint: #767b87;
 
-  --accent: #ffa76a;
-  --accent-vivid: #ff8a3d;
-  --accent-soft: rgb(255 138 61 / 0.14);
-  --ai: #ffa76a;
-  --ai-soft: rgb(255 138 61 / 0.14);
+  --accent: #f2f3f5;
+  --accent-vivid: #ffffff;
+  --accent-soft: rgb(255 255 255 / 0.1);
+  --ai: #f2f3f5;
+  --ai-soft: rgb(255 255 255 / 0.1);
   --health: #5fbf8b;
   --health-soft: rgb(95 191 139 / 0.14);
-  --warn: #a8a29e;
+  --warn: #a0a4ae;
   --warn-soft: rgb(255 255 255 / 0.08);
   --risk: #f0736a;
   --risk-soft: rgb(240 115 106 / 0.14);
-  --gold: #ff8a3d;
+  --gold: #f2f3f5;
 
-  --glass-highlight: rgb(255 255 255 / 0.07);
-  --glass-blur: blur(22px) saturate(140%);
+  --glass-highlight: rgb(255 255 255 / 0.08);
+  --glass-blur: blur(24px) saturate(150%);
 
   --shadow:
     0 1px 2px rgb(0 0 0 / 0.5),
     0 14px 36px -16px rgb(0 0 0 / 0.7),
-    0 28px 70px -34px rgb(255 138 61 / 0.22);
+    0 30px 72px -34px rgb(64 84 170 / 0.3);
   --shadow-lift:
     0 2px 6px rgb(0 0 0 / 0.55),
     0 20px 48px -18px rgb(0 0 0 / 0.75),
-    0 36px 90px -38px rgb(255 138 61 / 0.34);
-  --glow: 0 0 48px rgb(255 138 61 / 0.24);
+    0 38px 92px -38px rgb(64 84 170 / 0.42);
+  --glow: 0 6px 26px -6px rgb(255 255 255 / 0.26);
 
-  --atmosfera-1: rgb(255 138 61 / 0.16);
-  --atmosfera-2: rgb(255 138 61 / 0.07);
-  --grao: 0.05;
+  /* No escuro a atmosfera precisa de mais corpo: o preto engole gradiente fraco. */
+  --atmosfera-1: rgb(99 132 255 / 0.2);
+  --atmosfera-2: rgb(164 128 255 / 0.16);
+  --atmosfera-3: rgb(70 200 220 / 0.12);
+  --grao: 0.045;
 }
 
 @theme inline {
@@ -165,13 +179,14 @@ html {
 /*
   Atmosfera. O vidro só existe se houver algo atrás dele: sobre um fundo chapado
   o blur não tem o que borrar e o painel vira um retângulo branco com sombra.
-  Dois halos âmbar fixos dão ao blur matéria-prima para trabalhar.
+  Três halos frios fixos dão ao blur matéria-prima para trabalhar.
 */
 body {
   background-color: var(--canvas);
   background-image:
-    radial-gradient(60rem 40rem at 88% -8%, var(--atmosfera-1), transparent 60%),
-    radial-gradient(50rem 38rem at 2% 104%, var(--atmosfera-2), transparent 62%);
+    radial-gradient(58rem 40rem at 86% -10%, var(--atmosfera-1), transparent 62%),
+    radial-gradient(52rem 38rem at 4% 106%, var(--atmosfera-2), transparent 64%),
+    radial-gradient(40rem 34rem at 50% 42%, var(--atmosfera-3), transparent 68%);
   background-attachment: fixed;
   color: var(--ink);
   font-feature-settings: 'ss01', 'cv11';
@@ -258,9 +273,14 @@ body::after {
   border-radius: 4px;
 }
 
+/*
+  Fundo em tinta, texto na cor do canvas. Fixar `color: #fff` aqui funcionava
+  enquanto o acento era âmbar, mas com a paleta monocromática `accent-vivid`
+  vira branco no tema escuro — e seria branco sobre branco.
+*/
 ::selection {
-  background: var(--accent-vivid);
-  color: #fff;
+  background: var(--ink);
+  color: var(--canvas);
 }
 
 /* Densidade de terminal de operação: scrollbar fina, sem ocupar espaço visual. */
