@@ -318,6 +318,6 @@ export function preparacaoEmTexto(nomeCliente: string, p: Preparacao): string {
   }
 
   L.push('');
-  L.push('Gerado pelo InsightIQ a partir do histórico analisado da conta.');
+  L.push('Gerado pelo Benjamin a partir do histórico analisado da conta.');
   return L.join('\n');
 }

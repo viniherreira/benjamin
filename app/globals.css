@@ -1,78 +1,129 @@
 @import 'tailwindcss';
 
 /*
-  InsightIQ — sistema de cor.
+  Benjamin — sistema de cor.
   Toda cor tem significado. Nada aqui é decorativo.
 
-    accent  ciano/azul  → navegação, foco, ação primária
-    ai      violeta     → tudo que foi produzido pelo motor de análise
-    health  verde       → saúde da conta, pipeline, sinal positivo
-    warn    âmbar       → atenção, pendência, dado de baixa confiabilidade
-    risk    vermelho    → churn, receita em risco, concorrente ativo
-    gold    dourado     → exclusivo da marca ("o ouro invisível de cada conversa")
+    accent  âmbar    → navegação, foco, ação primária, marca, saída do motor
+    health  verde    → saúde da conta e pipeline, dessaturado
+    risk    vermelho → churn e receita em risco, dessaturado
+    warn    grafite  → atenção e baixa confiabilidade — peso, não cor
 
-  Tema escuro é o padrão. O claro troca só os valores abaixo — nenhum
-  componente conhece o tema, todos leem as variáveis.
+  A paleta anterior tinha seis cores competindo por atenção. Com seis sinais
+  cromáticos ao mesmo tempo, nenhum é sinal: a tela inteira grita. Agora existe
+  UMA cor de marca e DUAS de decisão. Atenção virou peso tipográfico, porque
+  "dado de baixa confiabilidade" não é emergência — é ressalva.
+
+  O tema claro é o padrão: o vidro precisa de luz atrás dele. O escuro é opt-in
+  e troca só os valores abaixo — nenhum componente conhece o tema, todos leem as
+  variáveis.
+
+  Sobre contraste: `accent` é o âmbar ESCURO, seguro para texto (5,4:1 sobre o
+  canvas). `accent-vivid` é o âmbar incandescente, que só aparece onde não
+  carrega leitura — brilho, preenchimento, marca, gradiente. Trocar um pelo
+  outro em texto reprova em acessibilidade, e por isso são dois tokens.
 */
 
 :root,
-[data-theme='dark'] {
-  --canvas: #070a10;
-  --surface: #0d121b;
-  --surface-2: #131a26;
-  --surface-3: #1a2331;
-  --line: #1e2937;
-  --line-strong: #2c3a4d;
+[data-theme='light'] {
+  --canvas: #fafaf8;
+  --canvas-deep: #f2f1ed;
+  --surface: rgb(255 255 255 / 0.72);
+  --surface-solid: #ffffff;
+  --surface-2: rgb(246 244 240 / 0.82);
+  --surface-3: #ebe9e3;
+  --line: rgb(15 14 12 / 0.09);
+  --line-strong: rgb(15 14 12 / 0.18);
 
-  --ink: #e6edf7;
-  --ink-dim: #93a3bb;
-  --ink-faint: #64748b;
+  --ink: #0a0a0b;
+  --ink-dim: #55524c;
+  --ink-faint: #75716a;
 
-  --accent: #22b8ff;
-  --accent-soft: #0b3a54;
-  --ai: #a78bfa;
-  --ai-soft: #2e2350;
-  --health: #12b76a;
-  --health-soft: #0b3b26;
-  --warn: #f5a524;
-  --warn-soft: #43300a;
-  --risk: #f04438;
-  --risk-soft: #4a1512;
-  --gold: #d9a441;
+  --accent: #b4470d;
+  --accent-vivid: #ff8a3d;
+  --accent-soft: #fff1e6;
+  --ai: #b4470d;
+  --ai-soft: #fff1e6;
+  --health: #2e7d5b;
+  --health-soft: #e3f3eb;
+  --warn: #57534e;
+  --warn-soft: #efede8;
+  --risk: #be3f32;
+  --risk-soft: #fce9e6;
+  --gold: #ff8a3d;
 
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  --glass-highlight: rgb(255 255 255 / 0.9);
+  --glass-blur: blur(20px) saturate(170%);
+
+  /*
+    Três camadas: contato, elevação e — a última — a sombra âmbar difusa que faz
+    o painel parecer iluminado por trás em vez de recortado com Photoshop.
+  */
+  --shadow:
+    0 1px 2px rgb(24 18 10 / 0.04),
+    0 12px 32px -14px rgb(24 18 10 / 0.16),
+    0 24px 60px -30px rgb(255 138 61 / 0.28);
+  --shadow-lift:
+    0 2px 4px rgb(24 18 10 / 0.05),
+    0 18px 44px -16px rgb(24 18 10 / 0.2),
+    0 32px 80px -34px rgb(255 138 61 / 0.4);
+  --glow: 0 0 40px rgb(255 138 61 / 0.18);
+
+  --atmosfera-1: rgb(255 138 61 / 0.13);
+  --atmosfera-2: rgb(255 138 61 / 0.06);
+  --grao: 0.03;
 }
 
-[data-theme='light'] {
-  --canvas: #f5f7fa;
-  --surface: #ffffff;
-  --surface-2: #f0f3f8;
-  --surface-3: #e6ebf3;
-  --line: #dde3ec;
-  --line-strong: #c3cddb;
+[data-theme='dark'] {
+  --canvas: #0a0a0c;
+  --canvas-deep: #060607;
+  --surface: rgb(255 255 255 / 0.045);
+  --surface-solid: #131316;
+  --surface-2: rgb(255 255 255 / 0.07);
+  --surface-3: rgb(255 255 255 / 0.11);
+  --line: rgb(255 255 255 / 0.1);
+  --line-strong: rgb(255 255 255 / 0.2);
 
-  --ink: #0f1a2a;
-  --ink-dim: #4a5a72;
-  --ink-faint: #71829b;
+  --ink: #f2f2f0;
+  --ink-dim: #a8a49c;
+  --ink-faint: #7c7871;
 
-  --accent: #0369a1;
-  --accent-soft: #e0f2fe;
-  --ai: #6d28d9;
-  --ai-soft: #ede9fe;
-  --health: #047857;
-  --health-soft: #d1fae5;
-  --warn: #b45309;
-  --warn-soft: #fef3c7;
-  --risk: #b42318;
-  --risk-soft: #fee4e2;
-  --gold: #a1741f;
+  --accent: #ffa76a;
+  --accent-vivid: #ff8a3d;
+  --accent-soft: rgb(255 138 61 / 0.14);
+  --ai: #ffa76a;
+  --ai-soft: rgb(255 138 61 / 0.14);
+  --health: #5fbf8b;
+  --health-soft: rgb(95 191 139 / 0.14);
+  --warn: #a8a29e;
+  --warn-soft: rgb(255 255 255 / 0.08);
+  --risk: #f0736a;
+  --risk-soft: rgb(240 115 106 / 0.14);
+  --gold: #ff8a3d;
 
-  --shadow: 0 1px 2px rgb(15 26 42 / 0.06), 0 8px 24px -12px rgb(15 26 42 / 0.18);
+  --glass-highlight: rgb(255 255 255 / 0.07);
+  --glass-blur: blur(22px) saturate(140%);
+
+  --shadow:
+    0 1px 2px rgb(0 0 0 / 0.5),
+    0 14px 36px -16px rgb(0 0 0 / 0.7),
+    0 28px 70px -34px rgb(255 138 61 / 0.22);
+  --shadow-lift:
+    0 2px 6px rgb(0 0 0 / 0.55),
+    0 20px 48px -18px rgb(0 0 0 / 0.75),
+    0 36px 90px -38px rgb(255 138 61 / 0.34);
+  --glow: 0 0 48px rgb(255 138 61 / 0.24);
+
+  --atmosfera-1: rgb(255 138 61 / 0.16);
+  --atmosfera-2: rgb(255 138 61 / 0.07);
+  --grao: 0.05;
 }
 
 @theme inline {
   --color-canvas: var(--canvas);
+  --color-canvas-deep: var(--canvas-deep);
   --color-surface: var(--surface);
+  --color-surface-solid: var(--surface-solid);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
   --color-line: var(--line);
@@ -83,6 +134,7 @@
   --color-ink-faint: var(--ink-faint);
 
   --color-accent: var(--accent);
+  --color-accent-vivid: var(--accent-vivid);
   --color-accent-soft: var(--accent-soft);
   --color-ai: var(--ai);
   --color-ai-soft: var(--ai-soft);
@@ -94,37 +146,121 @@
   --color-risk-soft: var(--risk-soft);
   --color-gold: var(--gold);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
   --shadow-panel: var(--shadow);
+  --shadow-lift: var(--shadow-lift);
+  --shadow-glow: var(--glow);
 }
 
 html {
-  color-scheme: dark;
-}
-
-[data-theme='light'] {
   color-scheme: light;
 }
 
-body {
-  background: var(--canvas);
-  color: var(--ink);
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  -webkit-font-smoothing: antialiased;
+[data-theme='dark'] {
+  color-scheme: dark;
 }
+
+/*
+  Atmosfera. O vidro só existe se houver algo atrás dele: sobre um fundo chapado
+  o blur não tem o que borrar e o painel vira um retângulo branco com sombra.
+  Dois halos âmbar fixos dão ao blur matéria-prima para trabalhar.
+*/
+body {
+  background-color: var(--canvas);
+  background-image:
+    radial-gradient(60rem 40rem at 88% -8%, var(--atmosfera-1), transparent 60%),
+    radial-gradient(50rem 38rem at 2% 104%, var(--atmosfera-2), transparent 62%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Grão: tira o aspecto de plástico do gradiente e dá textura ao papel. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: var(--grao);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/*
+  Vidro. Um só lugar define o material — borda hairline, blur, sombra longa e o
+  brilho interno na aresta superior, que é o detalhe que separa vidro de
+  "div branca com opacidade".
+*/
+.vidro {
+  background: var(--surface);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow), inset 0 1px 0 var(--glass-highlight);
+}
+
+.vidro-sutil {
+  background: var(--surface);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+/* Elevação no hover — só onde o card é clicável. */
+.vidro-hover {
+  transition:
+    box-shadow 0.28s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.28s ease;
+}
+
+.vidro-hover:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-lift), inset 0 1px 0 var(--glass-highlight);
+}
+
+/* Entrada: uma orquestração no carregamento vale mais que dez microinterações. */
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.subir {
+  animation: subir 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.escalonar > * {
+  animation: subir 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.escalonar > *:nth-child(1) { animation-delay: 0.02s; }
+.escalonar > *:nth-child(2) { animation-delay: 0.06s; }
+.escalonar > *:nth-child(3) { animation-delay: 0.1s; }
+.escalonar > *:nth-child(4) { animation-delay: 0.14s; }
+.escalonar > *:nth-child(5) { animation-delay: 0.18s; }
+.escalonar > *:nth-child(6) { animation-delay: 0.22s; }
+.escalonar > *:nth-child(7) { animation-delay: 0.26s; }
+.escalonar > *:nth-child(8) { animation-delay: 0.3s; }
 
 /* Acessibilidade: foco sempre visível, inclusive na navegação por teclado. */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-vivid);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 ::selection {
-  background: var(--accent);
-  color: var(--canvas);
+  background: var(--accent-vivid);
+  color: #fff;
 }
 
 /* Densidade de terminal de operação: scrollbar fina, sem ocupar espaço visual. */
@@ -147,7 +283,7 @@ body {
 
 /*
   Impressão: o briefing pré-reunião é feito para ser levado em papel para a call.
-  Some a navegação e força fundo claro — economiza tinta e melhora a leitura.
+  Some a navegação, o vidro e o grão — economiza tinta e melhora a leitura.
 */
 @media print {
   .no-print {
@@ -159,6 +295,7 @@ body {
   [data-theme='light'] {
     --canvas: #ffffff;
     --surface: #ffffff;
+    --surface-solid: #ffffff;
     --surface-2: #ffffff;
     --surface-3: #f2f2f2;
     --line: #cccccc;
@@ -166,11 +303,27 @@ body {
     --ink: #000000;
     --ink-dim: #333333;
     --ink-faint: #666666;
+    --accent: #000000;
     --shadow: none;
+    --shadow-lift: none;
+    --glow: none;
+    --glass-highlight: transparent;
   }
 
   body {
     background: #fff;
+    background-image: none;
+  }
+
+  body::after {
+    display: none;
+  }
+
+  .vidro,
+  .vidro-sutil {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
   }
 
   main {
@@ -184,5 +337,9 @@ body {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .vidro-hover:hover {
+    transform: none;
   }
 }

@@ -109,7 +109,7 @@ export default async function ClientesPage() {
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+        <div className="overflow-x-auto vidro rounded-xl">
           <table className="w-full text-[12.5px]">
             <thead className="border-b border-line text-left text-[11px] uppercase tracking-wide text-ink-faint">
               <tr>

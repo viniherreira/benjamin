@@ -1,8 +1,8 @@
 {
-  "name": "insightiq",
+  "name": "benjamin",
   "version": "0.1.0",
   "private": true,
-  "description": "InsightIQ — o ouro invisível de cada conversa. Challenge FIAP x TOTVS 2026.",
+  "description": "Benjamin — o ouro invisível de cada conversa. Challenge FIAP x TOTVS 2026.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

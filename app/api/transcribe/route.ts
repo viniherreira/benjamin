@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       {
         erro: 'Transcrição de áudio indisponível: OPENAI_API_KEY não está configurada.',
         detalhe:
-          'O núcleo do InsightIQ analisa texto. A captação por áudio é um adaptador plugável e precisa de credencial de STT. Sem ela o sistema não simula uma transcrição — use a aba "Colar texto" ou configure a chave no ambiente.',
+          'O núcleo do Benjamin analisa texto. A captação por áudio é um adaptador plugável e precisa de credencial de STT. Sem ela o sistema não simula uma transcrição — use a aba "Colar texto" ou configure a chave no ambiente.',
         alternativas: [
           'Colar a transcrição pronta (Meet, Zoom ou Teams exportam legenda).',
           'Gravar ao vivo pelo navegador, que usa a Web Speech API e não custa nada.',

@@ -121,7 +121,7 @@ export function FormIngestao() {
   }
 
   return (
-    <div className="rounded-lg border border-line bg-surface shadow-panel">
+    <div className="vidro rounded-xl">
       {/* Abas */}
       <div className="flex items-center gap-1 border-b border-line px-2 pt-2">
         <BotaoAba ativo={aba === 'texto'} onClick={() => setAba('texto')} icone={<ClipboardPaste size={14} />}>

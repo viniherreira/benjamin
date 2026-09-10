@@ -409,7 +409,7 @@ export default async function ValidacaoPage() {
         pergunta="Roda o motor sobre o corpus agora e mostra o resultado, inclusive o ruim."
         icone={<FlaskConical size={14} />}
       >
-        <div className="rounded-lg border border-line bg-surface p-4 shadow-panel">
+        <div className="vidro rounded-xl p-4">
           <MetricasAoVivo />
         </div>
 

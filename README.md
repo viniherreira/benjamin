@@ -1,4 +1,4 @@
-# InsightIQ
+# Benjamin
 
 **O ouro invisível de cada conversa.**
 

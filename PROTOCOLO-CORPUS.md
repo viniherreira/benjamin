@@ -1,4 +1,4 @@
-# Protocolo do Corpus Real — InsightIQ
+# Protocolo do Corpus Real — Benjamin
 
 Documento operacional para o squad gravar as 10 a 12 reuniões do **Corpus A**.
 

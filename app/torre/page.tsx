@@ -52,7 +52,7 @@ function CardValor({
     risk: 'text-risk',
   };
   return (
-    <section className="rounded-lg border border-line bg-surface p-4 shadow-panel">
+    <section className="vidro rounded-xl p-4">
       <div className="flex items-center gap-1.5 text-ink-faint">
         {icone}
         <h2 className="text-[11px] font-semibold uppercase tracking-wide">{rotulo}</h2>

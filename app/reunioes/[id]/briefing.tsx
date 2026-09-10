@@ -139,7 +139,7 @@ export function Briefing({
 
       {/* Coluna da transcrição */}
       <aside className="lg:sticky lg:top-4 lg:h-fit">
-        <div className="overflow-hidden rounded-lg border border-line bg-surface shadow-panel">
+        <div className="overflow-hidden vidro rounded-xl">
           <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">
             <div className="flex items-center gap-2">
               <MessagesSquare size={14} className="text-ink-dim" />
@@ -224,7 +224,7 @@ function Secao({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-line bg-surface shadow-panel">
+    <section className="vidro rounded-xl">
       <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
         {icone ? <span className="text-ink-dim">{icone}</span> : null}
         <h2 className="text-[13px] font-semibold text-ink">{titulo}</h2>
@@ -341,7 +341,7 @@ function ScoreCard({
   onSelect: (e: Evidence | undefined) => void;
 }) {
   return (
-    <section className="rounded-lg border border-line bg-surface p-4 shadow-panel">
+    <section className="vidro rounded-xl p-4">
       <div className="flex items-center gap-1.5 text-ink-dim">
         {icone}
         <h3 className="text-[12px] font-semibold uppercase tracking-wide">{titulo}</h3>

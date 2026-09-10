@@ -1,7 +1,7 @@
 import type { BusinessUnit, CategoriaObjecao } from '../types';
 
 /**
- * Léxicos do InsightIQ — arquivo único e editável.
+ * Léxicos do Benjamin — arquivo único e editável.
  *
  * IMPORTANTE: todos os padrões são escritos em MINÚSCULO e SEM ACENTO, porque
  * rodam contra o `textoBusca` (ver segment.ts), que é a transcrição dobrada

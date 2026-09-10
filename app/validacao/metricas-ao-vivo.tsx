@@ -43,7 +43,7 @@ const n3 = (v: number) => v.toFixed(3);
 
 function Tabela({ titulo, legenda, r }: { titulo: string; legenda: string; r: Relatorio }) {
   return (
-    <div className="rounded-lg border border-line bg-surface">
+    <div className="vidro rounded-xl">
       <div className="border-b border-line px-4 py-2.5">
         <h3 className="text-[12.5px] font-semibold text-ink">{titulo}</h3>
         <p className="text-[11px] text-ink-faint">

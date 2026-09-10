@@ -18,7 +18,7 @@ const titulo = (t: string) => {
   linha(`── ${t} ${'─'.repeat(Math.max(0, 62 - t.length))}`);
 };
 
-linha(`\nINSIGHTIQ · motor: ${r.engine} · ${r.latency_ms}ms`);
+linha(`\nBENJAMIN · motor: ${r.engine} · ${r.latency_ms}ms`);
 
 titulo('RESUMO');
 linha(r.summary);

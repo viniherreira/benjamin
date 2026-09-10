@@ -1,5 +1,5 @@
 /**
- * Tipos do schema do InsightIQ.
+ * Tipos do schema do Benjamin.
  *
  * Escritos a partir do schema real do projeto (gerado pelo Supabase e compactado
  * à mão). Sempre que a migration mudar, este arquivo muda junto — é ele que dá

@@ -93,7 +93,7 @@ export async function GET(
   }
 
   const linha = paraLinhaCrm(dados);
-  const base = `insightiq-${dados.reuniao.meeting_date}-${id.slice(0, 8)}`;
+  const base = `benjamin-${dados.reuniao.meeting_date}-${id.slice(0, 8)}`;
 
   if (formato === 'csv') {
     const cabecalho = Object.keys(linha).join(',');
@@ -112,7 +112,7 @@ export async function GET(
   return NextResponse.json(
     {
       gerado_em: new Date().toISOString(),
-      origem: 'InsightIQ',
+      origem: 'Benjamin',
       campos_crm: linha,
       // A evidência vai junto: é o que permite auditar cada campo no CRM.
       evidencias: dados.analise.totvs_products
