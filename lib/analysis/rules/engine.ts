@@ -36,7 +36,10 @@ import { existe } from './util';
 export function analisarComRegras(entrada: EntradaAnalise): AnalysisResult {
   const t0 = performance.now();
 
-  const prep = preparar(entrada.texto);
+  const prep = preparar(entrada.texto, {
+    empresaVendedora: entrada.empresaVendedora,
+    papeisFixados: entrada.papeisFixados,
+  });
   const dataReuniao = entrada.dataReuniao ?? new Date().toISOString().slice(0, 10);
 
   // --- Extração ---

@@ -316,6 +316,22 @@ export type EntradaAnalise = {
   /** Âncora para resolver prazos relativos ("até sexta"). ISO yyyy-mm-dd. */
   dataReuniao?: string;
   memoria?: MemoriaCliente;
+  /**
+   * Quem está vendendo. Default 'TOTVS'.
+   *
+   * O sinal "aqui na <empresa>" vale muito e estava cravado no léxico como
+   * TOTVS. Como parâmetro ele continua valendo sem prender o motor a um
+   * cliente só.
+   */
+  empresaVendedora?: string;
+  /**
+   * Papéis confirmados por um humano. Chave em minúsculo, vence o motor.
+   *
+   * Isto não é campo de auditoria: talk ratio, voz do cliente e o filtro de
+   * sentimento dependem do papel. Se o humano corrige e o briefing não muda,
+   * a correção é teatro.
+   */
+  papeisFixados?: Record<string, Lado>;
 };
 
 /* ------------------------------------------------------------------ *
