@@ -27,6 +27,7 @@ Marcos: Pode, tranquilo.`,
     // Anotação corrigida: "sistema que ninguém mantém" é risco de legado, não
     // dor de integração. Erro meu na primeira passada de anotação.
     gold: gold({
+      papeis: { ana: 'vendedor', marcos: 'cliente' },
       dores: [],
       poder_decisao: 'desconhecido',
       sentimento: 'neutro',
@@ -53,6 +54,7 @@ Roberto: Olha, eu quero acreditar. Mas o meu diretor já pediu pra eu cotar com 
 Carla: Entendo. Me dá até amanhã.
 Roberto: Até amanhã, então.`,
     gold: gold({
+      papeis: { carla: 'vendedor', roberto: 'cliente' },
       concorrentes: [{ nome: 'Sankhya', ativo: true }],
       dores: ['suporte', 'fiscal'],
       churn_claro: true,
@@ -82,6 +84,7 @@ Patrícia: Se vier rápido, eu olho. Mas não me venha com "vamos avaliar", tá?
 Carla: Semana que vem, quarta, com os dois documentos.
 Patrícia: Anotado.`,
     gold: gold({
+      papeis: { carla: 'vendedor', 'patrícia': 'cliente' },
       concorrentes: [
         { nome: 'Sankhya', ativo: true },
         { nome: 'Omie', ativo: true },
@@ -118,6 +121,7 @@ Ana: Agendo.`,
     // Anotação corrigida: demora para abrir loja é dor de implantação/processo,
     // não de integração entre sistemas.
     gold: gold({
+      papeis: { ana: 'vendedor', fernanda: 'cliente' },
       objecoes: [],
       dores: [],
       unidades_oportunidade: ['gestao'],
@@ -149,6 +153,7 @@ Antônio: Rapaz. Isso aí me interessa muito mais que qualquer coisa de estoque.
 Ana: Posso te trazer uma simulação com os seus números reais na próxima semana?
 Antônio: Traz. E traz a taxa, viu, porque é ela que vai decidir.`,
     gold: gold({
+      papeis: { ana: 'vendedor', 'antônio': 'cliente' },
       produtos: [
         { nome: 'TOTVS Protheus', status: 'em_uso' },
         { nome: 'TOTVS Antecipa', status: 'oportunidade' },
@@ -182,6 +187,7 @@ Ana: Depende do número de usuários e do volume de contatos. Pra oito vendedore
 Juliana: Manda. E se der, marca uma demo com o meu gerente comercial junto.
 Ana: Marco pra semana que vem.`,
     gold: gold({
+      papeis: { ana: 'vendedor', juliana: 'cliente' },
       produtos: [
         { nome: 'TOTVS Protheus', status: 'em_uso' },
         { nome: 'RD Station', status: 'oportunidade' },
@@ -214,6 +220,7 @@ Ricardo: Deixa eu ver aqui como é que tá a agenda deles e te aviso.
 Ana: Posso te procurar na semana que vem?
 Ricardo: Pode. Vou ver e te aviso.`,
     gold: gold({
+      papeis: { ana: 'vendedor', ricardo: 'cliente' },
       dores: [],
       sentimento: 'neutro',
       poder_decisao: 'desconhecido',
@@ -241,6 +248,7 @@ Bruno: Perfeito, obrigado.
 Carla: Marcamos a próxima revisão pra outubro?
 Bruno: Marca sim.`,
     gold: gold({
+      papeis: { carla: 'vendedor', bruno: 'cliente' },
       dores: [],
       sentimento: 'positivo',
       poder_decisao: 'desconhecido',
@@ -267,6 +275,7 @@ Sérgio: É assim que eu gosto.
 Ana: Te retorno até quarta com as datas.
 Sérgio: Fico no aguardo.`,
     gold: gold({
+      papeis: { ana: 'vendedor', 'sérgio': 'cliente' },
       concorrentes: [{ nome: 'SAP', ativo: false }],
       objecoes: ['prazo'],
       dores: [],
@@ -296,6 +305,7 @@ Débora: Precisa. Me manda os nomes completos até dia dez que eu cadastro na po
 Ana: Mando amanhã.
 Débora: Então tá certo. Até dia doze.`,
     gold: gold({
+      papeis: { ana: 'vendedor', 'débora': 'cliente' },
       dores: [],
       sentimento: 'neutro',
       poder_decisao: 'desconhecido',
@@ -322,6 +332,7 @@ Paulo: Aí sim. Manda uma proposta com esse escopo em fases que eu levo pro sóc
 Ana: Mando até segunda.
 Paulo: E coloca o valor separado por fase, por favor.`,
     gold: gold({
+      papeis: { ana: 'vendedor', paulo: 'cliente' },
       produtos: [{ nome: 'TOTVS Protheus', status: 'em_uso' }],
       objecoes: ['prazo'],
       dores: ['fiscal'],
@@ -346,6 +357,7 @@ Henrique: Tá. Vou precisar pensar.
 Ana: Claro. Alguma dúvida específica?
 Henrique: Não, por enquanto não.`,
     gold: gold({
+      papeis: { ana: 'vendedor', henrique: 'cliente' },
       dores: [],
       sentimento: 'neutro',
       poder_decisao: 'desconhecido',
@@ -564,6 +576,7 @@ Eu também vejo dessa forma.`,
      * então concorrência anônima vale zero mesmo sendo decisiva.
      */
     gold: gold({
+      papeis: { fernanda: 'vendedor', ricardo: 'cliente', juliana: 'cliente' },
       produtos: [{ nome: 'TOTVS Protheus', status: 'em_uso' }],
       objecoes: ['preco', 'concorrencia', 'tecnica'],
       dores: ['custo', 'processo_manual', 'suporte', 'usabilidade'],

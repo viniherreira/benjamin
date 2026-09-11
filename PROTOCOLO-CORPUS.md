@@ -91,6 +91,22 @@ Foram descobertas anotando o corpus sintético. Seguir as mesmas para o real, se
 - **Concorrente do passado não é ameaça.** "Usava na empresa anterior" → `ativo: false`.
 - **Valor sem unidade herda a escala anterior.** "Sessenta mil… uns cinquenta" → o segundo é R$ 50.000.
 - **Interesse é anotado como faixa**, nunca como número exato. Score é estimativa; cobrar valor exato mede ruído.
+- **Papel de falante é anotado pela empresa, não pela fala.** O lado de cada
+  falante (`gold.papeis`) sai de quem trabalha na empresa nomeada em
+  `Amostra.cliente`: quem trabalha nela é `cliente`, quem não trabalha é
+  `vendedor`. Não anotar por dêixis ("nossa plataforma"), por cargo ou por quem
+  faz as perguntas — esses são exatamente os sinais que `lib/analysis/rules/papeis.ts`
+  usa para decidir, e anotar por eles seria corrigir a prova com o gabarito do
+  aluno. Quando a empresa não decide sozinha, vale quem trata o outro lado como
+  fornecedor ("a faixa que **vocês** pediram") e quem é dono da infraestrutura
+  ou do orçamento.
+
+  Ressalva honesta: esta anotação **não é cega**. Foi feita pela mesma sessão
+  que escreveu a inferência, o que é uma fragilidade conhecida deste gabarito.
+  O critério da empresa foi escolhido justamente por ser independente dos
+  sinais do motor, e o baseline *"quem fala primeiro é o vendedor"* continua
+  sendo a defesa real contra decorar o formato do corpus. Anotação
+  independente, por outra pessoa, segue valendo mais.
 
 ---
 

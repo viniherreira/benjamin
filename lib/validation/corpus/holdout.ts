@@ -28,6 +28,7 @@ Ana: Posso montar um comparativo linha a linha?
 Cláudio: Monta. Se a diferença real for pequena, eu defendo vocês aqui dentro.
 Ana: Te mando quinta.`,
     gold: gold({
+      papeis: { ana: 'vendedor', 'cláudio': 'cliente' },
       concorrentes: [{ nome: 'Senior Sistemas', ativo: true }],
       objecoes: ['preco', 'concorrencia', 'autoridade'],
       dores: [],
@@ -57,6 +58,7 @@ Carla: Mônica, me deixa trazer um plano de recuperação com governança semana
 Mônica: Quinze dias. Se passar disso, a conversa muda de assunto.
 Carla: Entendido.`,
     gold: gold({
+      papeis: { carla: 'vendedor', 'mônica': 'cliente' },
       concorrentes: [{ nome: 'Benner', ativo: true }],
       dores: ['suporte'],
       churn_claro: true,
@@ -85,6 +87,7 @@ Vanessa: Se isso me devolver duas pessoas por semana, já se paga.
 Ana: Posso trazer uma simulação com o volume de vocês?
 Vanessa: Traz. E me diz também quanto tempo leva pra implantar.`,
     gold: gold({
+      papeis: { ana: 'vendedor', vanessa: 'cliente' },
       produtos: [{ nome: 'TOTVS Techfin', status: 'oportunidade' }],
       dores: ['financeiro', 'processo_manual'],
       unidades_oportunidade: ['techfin'],
@@ -114,6 +117,7 @@ Nilton: Quero ver isso com número. Me traz uma simulação com uma medição re
 Ana: Trago. Preciso que o senhor me autorize a puxar os dados de uma obra.
 Nilton: Autorizo. Fala com o Marcelo do financeiro que ele te passa.`,
     gold: gold({
+      papeis: { ana: 'vendedor', nilton: 'cliente' },
       produtos: [
         { nome: 'TOTVS Protheus', status: 'em_uso' },
         { nome: 'TOTVS Techfin', status: 'oportunidade' },
@@ -146,6 +150,7 @@ Tatiana: Isso seria ótimo pra apresentar pro conselho. Eles vivem perguntando q
 Ana: Consigo montar a conta de custo por aluno com os seus dados.
 Tatiana: Monta e marca uma call comigo e com o meu head de marketing.`,
     gold: gold({
+      papeis: { ana: 'vendedor', tatiana: 'cliente' },
       produtos: [
         { nome: 'RD Station Marketing', status: 'oportunidade' },
         { nome: 'RD Station CRM', status: 'oportunidade' },
@@ -179,6 +184,7 @@ Edson: E já vai agendando o kickoff pro início do mês que vem.
 Ana: Agendo. Preciso que você indique o sponsor interno.
 Edson: Sou eu mesmo. Aqui quem decide investimento de sistema sou eu.`,
     gold: gold({
+      papeis: { ana: 'vendedor', edson: 'cliente' },
       objecoes: ['preco'],
       dores: [],
       upsell_claro: true,
@@ -209,6 +215,7 @@ Rafael: Combinado. Alguma janela que eu deva evitar?
 Diego: Evita entre onze e treze, que é backup.
 Rafael: Anotado.`,
     gold: gold({
+      papeis: { rafael: 'vendedor', diego: 'cliente' },
       dores: [],
       sentimento: 'neutro',
       poder_decisao: 'desconhecido',
@@ -235,6 +242,7 @@ Marlene: É. Olha, hoje eu queria só que vocês conhecessem a estrutura. Amanh�
 Ana: Perfeito, é assim mesmo que a gente gosta de começar.
 Marlene: Então vem, deixa eu te mostrar o armazém.`,
     gold: gold({
+      papeis: { ana: 'vendedor', marlene: 'cliente' },
       dores: [],
       sentimento: 'positivo',
       poder_decisao: 'desconhecido',
@@ -261,6 +269,7 @@ Leandro: Faz sentido pra gente. Manda uma proposta que eu levo pro comitê de in
 Ana: Mando até quarta. Quem participa desse comitê?
 Leandro: Eu, o controller e o diretor industrial. Quem bate o martelo é o diretor.`,
     gold: gold({
+      papeis: { ana: 'vendedor', leandro: 'cliente' },
       concorrentes: [{ nome: 'Oracle', ativo: false }],
       dores: ['fiscal', 'processo_manual'],
       unidades_oportunidade: ['gestao'],
@@ -287,6 +296,7 @@ Carla: Agradeço a transparência. Me dá uma semana pra montar uma revisão com
 Gustavo: Uma semana eu te dou. Depois disso eu preciso levar alguma coisa pro meu sócio.
 Carla: Terei.`,
     gold: gold({
+      papeis: { carla: 'vendedor', gustavo: 'cliente' },
       concorrentes: [{ nome: 'Alterdata', ativo: true }],
       objecoes: ['preco'],
       dores: ['custo'],
@@ -308,6 +318,7 @@ Wagner: Entendi.
 Ana: Ficou alguma dúvida?
 Wagner: Não, ficou claro. Vou conversar internamente.`,
     gold: gold({
+      papeis: { ana: 'vendedor', wagner: 'cliente' },
       dores: [],
       sentimento: 'neutro',
       poder_decisao: 'desconhecido',
@@ -335,6 +346,7 @@ Sandra: O preço continua alto pro que a gente vai usar de verdade. Mas isso a g
 Ana: Justo.
 Sandra: Se falhar de novo, eu paro a conversa. Sem drama, mas paro.`,
     gold: gold({
+      papeis: { ana: 'vendedor', sandra: 'cliente' },
       objecoes: ['preco'],
       dores: [],
       churn_claro: true,
@@ -363,6 +375,7 @@ Almeida: Faça isso. Porque do jeito que está, a recomendação que vai subir �
 Carla: Me dá até o fim do mês para trazer a proposta de SLA.
 Almeida: Tem até lá.`,
     gold: gold({
+      papeis: { carla: 'vendedor', almeida: 'cliente' },
       dores: ['suporte'],
       churn_claro: true,
       sentimento: 'negativo',
