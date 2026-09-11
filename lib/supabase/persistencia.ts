@@ -676,6 +676,17 @@ function linhaParaAnalise(
     trust_score: r.trust_score,
     trust_signals: a(r.trust_signals),
     conversation_metrics: a(r.conversation_metrics),
+    /*
+     * PENDENTE: `analyses` ainda não tem coluna `speakers`.
+     *
+     * Os papéis existem na análise recém-rodada, mas não sobrevivem ao
+     * banco. Volta vazio em vez de inventar — mesma regra do resto do motor.
+     * A faixa de confirmação no briefing depende desta coluna existir: sem
+     * ela, o vendedor confirma o papel e a tela esquece no reload. Adicionar
+     * `speakers jsonb not null default '[]'` em `analyses` e regerar
+     * database.types.ts via MCP antes de construir a faixa.
+     */
+    speakers: [],
     transcript_quality: a(quality),
     bant: a(r.bant),
     interest_score: r.interest_score,

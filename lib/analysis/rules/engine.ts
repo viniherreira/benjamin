@@ -160,6 +160,14 @@ export function analisarComRegras(entrada: EntradaAnalise): AnalysisResult {
     trust_signals: conf.trust_signals,
 
     conversation_metrics,
+    speakers: prep.falantes.map((f) => ({
+      name: f.nome,
+      side: f.lado,
+      confidence: f.confianca,
+      signals: f.sinais,
+      words: f.palavras,
+      turns: f.turnos,
+    })),
     transcript_quality,
     bant,
 

@@ -82,6 +82,34 @@ describe('Os sinais sobrevivem até a camada de cima', () => {
   });
 });
 
+describe('Os papéis chegam ao resultado da análise', () => {
+  test('analisar() devolve quem é quem, com confiança e sinais', () => {
+    const r = analisar({
+      texto:
+        'Bruno: Nossa plataforma cobre o fiscal inteiro. Posso te mostrar na prática?\n' +
+        'Helena: A gente usa uma coisa caseira hoje e sofre no fechamento.',
+      dataReuniao: DATA,
+    });
+
+    const bruno = r.speakers.find((s) => s.name === 'Bruno');
+    const helena = r.speakers.find((s) => s.name === 'Helena');
+
+    assert.equal(bruno?.side, 'vendedor');
+    assert.equal(helena?.side, 'cliente');
+    assert.ok((bruno?.confidence ?? 0) > 0, 'a confiança precisa sair junto, senão a UI não sabe quando perguntar');
+    assert.ok((bruno?.signals.length ?? 0) > 0, 'sem sinais a faixa de confirmação não explica nada');
+  });
+
+  test('sem marcação de falante, a lista sai vazia em vez de inventar gente', () => {
+    const r = analisar({
+      texto: 'A gente conversou sobre o fechamento e ficou de retomar semana que vem.',
+      dataReuniao: DATA,
+    });
+
+    assert.deepEqual(r.speakers, []);
+  });
+});
+
 describe('Correção humana muda o briefing, não só o log', () => {
   const texto =
     'Ana: Nossa solução resolve isso. Posso te mostrar como funciona hoje?\n' +

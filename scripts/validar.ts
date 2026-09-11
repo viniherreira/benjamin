@@ -62,6 +62,44 @@ function tabela(titulo: string, m: RelatorioMetricas) {
   p(`MAE interesse: ${m.mae.interesse} pontos · MAE talk ratio: ${m.mae.talk_ratio}`);
   p(`cobertura de evidência: ${(m.cobertura_evidencia * 100).toFixed(2)}%`);
 
+  const pa = m.papel;
+  if (pa.por_falante.total > 0) {
+    const folga = pa.por_falante.taxa - pa.baseline_primeiro_a_falar.taxa;
+    p();
+    p('papel de falante (vendedor / cliente)');
+    p('─'.repeat(60));
+    p(
+      `acurácia por falante       ${pa.por_falante.taxa.toFixed(3).padStart(8)}   (${pa.por_falante.acertos}/${pa.por_falante.total})`,
+    );
+    p(
+      `baseline "quem abre vende" ${pa.baseline_primeiro_a_falar.taxa.toFixed(3).padStart(8)}   (${pa.baseline_primeiro_a_falar.acertos}/${pa.baseline_primeiro_a_falar.total})`,
+    );
+    const veredito =
+      folga < 0
+        ? '<-- PIOR que o chute burro'
+        : folga === 0
+          ? '<-- empatou com o chute burro'
+          : folga < 0.05
+            ? '<-- folga pequena demais para comemorar'
+            : '';
+    p(`folga sobre o baseline     ${(folga >= 0 ? '+' : '') + folga.toFixed(3)}`.padEnd(45) + veredito);
+
+    if (pa.baseline_primeiro_a_falar.taxa === 1) {
+      p();
+      p('  AVISO: o baseline acertou TUDO. Neste corpus o vendedor abre a reunião em');
+      p('  100% das amostras, então "quem fala primeiro é o vendedor" é perfeito por');
+      p('  construção e nenhuma inferência consegue ganhar dele — no máximo empatar.');
+      p('  Enquanto isso valer, este bloco NÃO valida a inferência de papel: ele só');
+      p('  mede o quanto o corpus é previsível. Só amostras adversariais (cliente');
+      p('  abrindo a call, CS em que o vendedor é CSM, três pessoas do lado do');
+      p('  cliente) tornam este número informativo.');
+    }
+    p(
+      `taxa de inversão           ${pa.inversoes.taxa.toFixed(3).padStart(8)}   (${pa.inversoes.amostras}/${pa.inversoes.total} amostras com os lados trocados)`,
+    );
+    p(`decidido por ordem de fala  ${String(pa.amostras_por_ordem_de_fala).padStart(7)} amostras (chute, não sinal)`);
+  }
+
   p();
   p('matriz de confusão — risco de churn (linha = gabarito, coluna = motor)');
   p('            baixo   medio    alto');

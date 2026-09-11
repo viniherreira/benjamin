@@ -227,6 +227,24 @@ export type QualidadeTranscricao = {
   warnings: string[];
 };
 
+/**
+ * Quem falou, de que lado, e por quê.
+ *
+ * `confidence` baixo não é defeito: é o motor dizendo que decidiu sem base
+ * firme e que a interface deveria pedir confirmação. `signals` é o que a faixa
+ * de confirmação mostra quando o vendedor pergunta "por que você achou isso?",
+ * e o que a métrica usa para separar decisão fundamentada de palpite por ordem
+ * de fala.
+ */
+export type FalanteInferido = {
+  name: string;
+  side: Lado;
+  confidence: number;
+  signals: string[];
+  words: number;
+  turns: number;
+};
+
 export type ValorDeNegocio = {
   revenue_at_risk: number | null;
   pipeline_value: number | null;
@@ -272,6 +290,8 @@ export type AnalysisResult = {
 
   // Qualidade do dado (provocação B)
   conversation_metrics: MetricasConversa;
+  /** Quem é vendedor e quem é cliente, com a confiança e os sinais da decisão. */
+  speakers: FalanteInferido[];
   transcript_quality: QualidadeTranscricao;
   bant: Bant;
 

@@ -1,4 +1,4 @@
-import type { AnalysisResult } from '../analysis/types';
+import type { AnalysisResult, FalanteInferido } from '../analysis/types';
 import type { Amostra, Gabarito } from './tipos';
 
 /**
@@ -58,6 +58,96 @@ const acuracia = (acertos: number, total: number): Acuracia => ({
 });
 
 /* ------------------------------------------------------------------ *
+ * Papel de falante
+ * ------------------------------------------------------------------ */
+
+export type MetricaPapel = {
+  /** Acurácia falante a falante. Denominador é o gabarito, não o que o motor viu. */
+  por_falante: Acuracia;
+  /**
+   * Amostras em que o motor decidiu os dois lados e trocou TODOS de lugar.
+   *
+   * Precisa de número próprio porque não é "mais um erro": inverter troca o
+   * talk ratio, põe a fala do vendedor no lugar da voz do cliente e faz o
+   * briefing inteiro mentir com aparência de certeza. Um lado errado e outro
+   * certo estraga menos que os dois trocados.
+   *
+   * Campo próprio em vez de `Acuracia` porque aqui `amostras` conta ERRO —
+   * chamar de "acertos" faria a leitura do relatório mentir.
+   */
+  inversoes: { amostras: number; total: number; taxa: number };
+  /**
+   * Baseline burro: quem fala primeiro é o vendedor, todo o resto é cliente.
+   *
+   * O corpus foi escrito pela própria equipe e nele o vendedor quase sempre
+   * abre. Se a inferência não bate este número com folga, ela decorou o
+   * formato do corpus em vez de aprender a conversa. Vai para o relatório
+   * ganhando ou perdendo.
+   */
+  baseline_primeiro_a_falar: Acuracia;
+  /** Amostras em que algum lado saiu do último recurso, não de sinal. */
+  amostras_por_ordem_de_fala: number;
+};
+
+export type ItemPapel = { speakers: FalanteInferido[]; gold: Gabarito };
+
+export function metricaDePapel(itens: ItemPapel[]): MetricaPapel {
+  let acertos = 0;
+  let total = 0;
+  let baselineAcertos = 0;
+  let invertidas = 0;
+  let amostrasComPapel = 0;
+  let porOrdemDeFala = 0;
+
+  for (const { speakers, gold } of itens) {
+    const esperado = gold.papeis;
+    if (!esperado || Object.keys(esperado).length === 0) continue;
+    amostrasComPapel++;
+
+    const ditos = new Map(speakers.map((s) => [s.name.toLowerCase(), s]));
+    // A ordem de `speakers` é a ordem de entrada na conversa.
+    const primeiro = speakers[0]?.name.toLowerCase();
+
+    if (speakers.some((s) => s.signals.includes('ordem_de_fala'))) porOrdemDeFala++;
+
+    let decididos = 0;
+    let trocados = 0;
+
+    for (const [nome, ladoGold] of Object.entries(esperado)) {
+      total++;
+
+      const dito = ditos.get(nome);
+      // Falante anotado que o parser não produziu é erro, não desconto no
+      // denominador — senão o motor melhora a nota deixando de ver gente.
+      if (dito && dito.side === ladoGold) acertos++;
+
+      if (dito && dito.side !== 'desconhecido') {
+        decididos++;
+        if (dito.side !== ladoGold) trocados++;
+      }
+
+      const chuteBaseline = nome === primeiro ? 'vendedor' : 'cliente';
+      if (chuteBaseline === ladoGold) baselineAcertos++;
+    }
+
+    // Inversão exige que o motor tenha decidido TODOS e errado TODOS.
+    const anotados = Object.keys(esperado).length;
+    if (decididos === anotados && trocados === anotados) invertidas++;
+  }
+
+  return {
+    por_falante: acuracia(acertos, total),
+    inversoes: {
+      amostras: invertidas,
+      total: amostrasComPapel,
+      taxa: amostrasComPapel === 0 ? 0 : Number((invertidas / amostrasComPapel).toFixed(3)),
+    },
+    baseline_primeiro_a_falar: acuracia(baselineAcertos, total),
+    amostras_por_ordem_de_fala: porOrdemDeFala,
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * Execução
  * ------------------------------------------------------------------ */
 
@@ -77,6 +167,7 @@ export type RelatorioMetricas = {
   mae: Record<string, number>;
   matriz_churn: Record<string, Record<string, number>>;
   cobertura_evidencia: number;
+  papel: MetricaPapel;
   falso_positivo_sem_sinal: Record<string, number>;
   latencia: { p50: number; p95: number; media: number; total_ms: number };
   throughput_por_min: number;
@@ -278,6 +369,7 @@ export function calcularMetricas(resultados: ResultadoAmostra[]): RelatorioMetri
       talk_ratio: talkTotal === 0 ? 0 : Number((erroTalk / talkTotal).toFixed(3)),
     },
     matriz_churn: matriz,
+    papel: metricaDePapel(resultados.map((r) => ({ speakers: r.analise.speakers, gold: r.gold }))),
     cobertura_evidencia: evidTotal === 0 ? 1 : Number((evidComp / evidTotal).toFixed(4)),
     falso_positivo_sem_sinal: {
       amostras: fpSemSinal.amostras,
