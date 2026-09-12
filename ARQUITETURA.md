@@ -86,8 +86,8 @@ de credencial.
 ### O que essa decisão custa
 
 Está medido e reportado em [VALIDACAO.md](VALIDACAO.md): sentimento em 4 classes
-fica em 0,548 de acurácia e o interest score tem MAE de 18 pontos. São
-exatamente os campos onde um LLM tende a ir melhor. A escolha foi trocar
+fica em 0,622 de acurácia e o interest score acerta a faixa anotada em 0,459,
+com MAE de 19,9 pontos. São exatamente os campos onde um LLM tende a ir melhor. A escolha foi trocar
 precisão nesses dois campos por custo zero, latência de milissegundos e
 auditabilidade nos campos que movem dinheiro.
 
