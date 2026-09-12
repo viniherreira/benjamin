@@ -11,7 +11,11 @@ import type { Amostra } from './tipos';
  * personas ANTES dos extratores existirem na forma final, e o gabarito foi
  * anotado lendo o texto.
  *
- * Divisão: 17 em dev (que eu leio para ajustar) e 13 em holdout (lacradas).
+ * Divisão: 22 em dev (que eu leio para ajustar) e 15 em holdout (lacradas).
+ *
+ * Seis delas são adversariais de papel — o cliente abre a reunião. Foram
+ * acrescentadas depois que a métrica de papel mostrou que, nas 31 originais, o
+ * vendedor abria em 100% das vezes e o baseline burro acertava tudo.
  */
 export const CORPUS_SINTETICO: Amostra[] = [...ARCO_JOAO, ...CORPUS_DEV, ...CORPUS_HOLDOUT];
 

@@ -384,4 +384,77 @@ Almeida: Tem até lá.`,
       churn_risco: 'alto',
     }),
   },
+
+  /*
+   * ADVERSARIAIS — o cliente abre a reunião.
+   *
+   * Escritas pelo mesmo motivo das de dev: sem elas o baseline "quem fala
+   * primeiro é o vendedor" é perfeito por construção também no holdout, e a
+   * acurácia de papel medida aqui não significaria nada.
+   *
+   * São cenários correntes em campo — o cliente que antecipa a conversa de
+   * renovação, e o comitê do cliente que convoca o fornecedor — escolhidos por
+   * serem realistas, não por mirarem alguma falha já observada do motor. Erro
+   * individual delas continua fechado a diagnóstico.
+   */
+
+  {
+    codigo: 'HLD-14',
+    cenario: 'renovacao_aberta_pelo_cliente',
+    particao: 'holdout',
+    cliente: 'Auto Peças Quatro Rodas',
+    texto: `Rogério: Carla, eu adiantei essa conversa de propósito, antes de vocês me mandarem a renovação.
+Carla: Tudo bem. Me conta o que você está pensando.
+Rogério: Eu quero renovar, isso não está em discussão. O que eu não quero é renovar no mesmo desenho.
+Carla: Que parte incomoda?
+Rogério: A gente paga por trinta e cinco licenças e usa vinte e duas. Isso vem se arrastando desde que fechamos a filial de Betim.
+Carla: Isso a gente consegue ajustar no aditivo.
+Rogério: E tem outra: o módulo de compras ninguém usa. Foi contratado no pacote e nunca saiu do papel.
+Carla: Aí eu prefiro entender antes de tirar. Se ninguém usou, pode ser que faltou implantação, não que o módulo não sirva.
+Rogério: Pode ser. Mas hoje ele é custo sem retorno.
+Carla: Deixa eu levantar o histórico de uso e te trazer as duas opções: ativar direito ou retirar do contrato.
+Rogério: Me traz até o dia vinte, que é quando eu fecho o orçamento do ano.
+Carla: Até o dia vinte.`,
+    gold: gold({
+      papeis: { rogério: 'cliente', carla: 'vendedor' },
+      dores: ['custo'],
+      objecoes: ['preco'],
+      sentimento: 'misto',
+      poder_decisao: 'decisor',
+      interesse: [45, 72],
+      churn_risco: 'medio',
+    }),
+  },
+
+  {
+    codigo: 'HLD-15',
+    cenario: 'descoberta_com_tres_do_cliente',
+    particao: 'holdout',
+    cliente: 'Rede Farmacêutica Bom Preço',
+    texto: `Marcelo: Ana, obrigado por vir. Deixa eu apresentar o time: a Renata é do financeiro e o Douglas cuida da TI.
+Ana: Prazer a todos.
+Marcelo: A gente chamou vocês porque o fechamento contábil virou um problema de gestão, não só de contabilidade.
+Renata: Eu fecho o mês em onze dias úteis. Deveria fechar em cinco. E fecho porque eu viro a noite, não porque o processo funciona.
+Ana: O que consome esses dias?
+Renata: Conciliação. A gente tem trinta e duas lojas e cada uma manda o movimento de um jeito diferente.
+Douglas: E a integração que a gente fez internamente quebra toda vez que muda alguma coisa no meio do caminho. Eu não tenho time pra sustentar aquilo.
+Ana: Vocês já avaliaram alguma solução de mercado pra isso?
+Douglas: A gente olhou a Alterdata no ano passado, mas parou por falta de gente pra tocar o projeto.
+Marcelo: Dessa vez é diferente. Eu já tenho verba aprovada pro ano que vem.
+Ana: De que ordem, se puder falar?
+Marcelo: Uns duzentos mil. Não é público isso, tá?
+Ana: Fica entre nós. Posso montar um desenho e voltar com vocês três juntos?
+Marcelo: Pode. Marca com a minha secretária.`,
+    gold: gold({
+      papeis: { marcelo: 'cliente', ana: 'vendedor', renata: 'cliente', douglas: 'cliente' },
+      concorrentes: [{ nome: 'Alterdata', ativo: false }],
+      dores: ['financeiro', 'integracao'],
+      unidades_oportunidade: ['techfin'],
+      budget: 200000,
+      sentimento: 'misto',
+      poder_decisao: 'decisor',
+      interesse: [70, 92],
+      churn_risco: 'baixo',
+    }),
+  },
 ];
