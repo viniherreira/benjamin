@@ -107,13 +107,16 @@ export type AnalysisRow = {
   sentiment: string;
   sentiment_score: number;
   aspect_sentiment: Json;
-  interest_score: number;
-  churn_risk: number;
+  /** null = o motor se absteve (migration papeis_e_abstencao). Não é 0. */
+  interest_score: number | null;
+  churn_risk: number | null;
   churn_signals: Json;
   upsell_signals: Json;
   trust_score: number;
   trust_signals: Json;
   conversation_metrics: Json;
+  /** FalanteInferido[] — papel, confiança e sinais por falante. */
+  speakers: Json;
   bant: Json;
   voice_of_customer: Json;
   business_value: Json;

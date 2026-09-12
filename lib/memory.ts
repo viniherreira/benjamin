@@ -298,7 +298,11 @@ export function consolidar(h: Historico): VisaoCliente {
   const tarefasConcluidas = h.tarefas.filter((t) => t.done).length;
 
   // --- Séries e persona ---
-  const interesseHistorico = analisadas.map((r) => r.analise!.interest_score);
+  // Reunião em que o motor se absteve (interest_score null) fica fora da série:
+  // entrar como 0 fabricaria uma queda de interesse que ninguém mediu.
+  const interesseHistorico = analisadas
+    .map((r) => r.analise!.interest_score)
+    .filter((v): v is number => v !== null);
   const confiancaHistorica = analisadas.map((r) => r.analise!.trust_score);
 
   const ORDEM_PODER = ['desconhecido', 'usuario', 'influenciador', 'decisor'];

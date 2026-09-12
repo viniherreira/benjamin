@@ -374,21 +374,13 @@ async function gravarAnalise(p: {
       sentiment_score: analise.sentiment_score,
       aspect_sentiment: j(analise.aspect_sentiment),
       /*
-       * PENDENTE: as colunas interest_score e churn_risk são NOT NULL.
-       *
-       * Enquanto forem, a abstenção do motor não cabe no banco e grava 0. O
-       * flag `scores_atribuiveis` viaja em transcript_quality (coluna jsonb) e
-       * é ele que `linhaParaAnalise` usa para devolver null na leitura — a
-       * aplicação fica honesta, mas uma consulta SQL direta lê 0 e entende
-       * "sem risco". Corrigir com:
-       *
-       *   alter table analyses alter column interest_score drop not null;
-       *   alter table analyses alter column churn_risk     drop not null;
-       *
-       * e regerar database.types.ts.
+       * null vai para o banco como null (migration papeis_e_abstencao). Antes a
+       * coluna era NOT NULL e a abstenção gravava 0 — que uma consulta SQL
+       * direta lia como "conta sem risco", a leitura errada e a mais cara.
        */
-      interest_score: analise.interest_score ?? 0,
-      churn_risk: analise.churn_risk ?? 0,
+      interest_score: analise.interest_score,
+      churn_risk: analise.churn_risk,
+      speakers: j(analise.speakers),
       churn_signals: j(analise.churn_signals),
       upsell_signals: j(analise.upsell_signals),
       trust_score: analise.trust_score,
@@ -693,21 +685,15 @@ function linhaParaAnalise(
     trust_score: r.trust_score,
     trust_signals: a(r.trust_signals),
     conversation_metrics: a(r.conversation_metrics),
-    /*
-     * PENDENTE: `analyses` ainda não tem coluna `speakers`.
-     *
-     * Os papéis existem na análise recém-rodada, mas não sobrevivem ao
-     * banco. Volta vazio em vez de inventar — mesma regra do resto do motor.
-     * A faixa de confirmação no briefing depende desta coluna existir: sem
-     * ela, o vendedor confirma o papel e a tela esquece no reload. Adicionar
-     * `speakers jsonb not null default '[]'` em `analyses` e regerar
-     * database.types.ts via MCP antes de construir a faixa.
-     */
-    speakers: [],
+    // Análise gravada antes da coluna existir volta com [] (default da migration).
+    speakers: a(r.speakers),
     transcript_quality: a(quality),
     bant: a(r.bant),
-    // Ver a pendência em gravarAnalise: o 0 gravado volta a ser null aqui,
-    // usando o flag que viajou dentro de transcript_quality.
+    /*
+     * Linhas antigas gravaram 0 no lugar da abstenção, quando a coluna ainda
+     * era NOT NULL. O flag em transcript_quality continua servindo para
+     * reconstruir o null delas; linha nova já chega null do banco.
+     */
     interest_score: qualidadeTipada.scores_atribuiveis === false ? null : r.interest_score,
     churn_risk: qualidadeTipada.scores_atribuiveis === false ? null : r.churn_risk,
     score_factors: a(r.score_factors),
