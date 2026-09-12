@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { Instrument_Sans, JetBrains_Mono } from 'next/font/google';
 import { Shell } from '@/components/shell';
 import './globals.css';
@@ -38,7 +39,21 @@ export const metadata: Metadata = {
  */
 const SCRIPT_TEMA = `(function(){try{var t=localStorage.getItem('benjamin-tema');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}}catch(e){}})()`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  /*
+   * A tela de entrada não usa o Shell.
+   *
+   * Com a navegação em volta, todo item do menu levaria de volta para o login —
+   * e o `<div class="subir">` do Shell anima `transform`, o que cria contexto
+   * de posicionamento e faz qualquer `position: fixed` dentro dele se ancorar
+   * no main em vez da janela. O cartão de login saía recortado por causa disso.
+   *
+   * O caminho chega por cabeçalho, posto pelo middleware: server component não
+   * lê a URL.
+   */
+  const caminho = (await headers()).get('x-benjamin-caminho') ?? '';
+  const semShell = caminho.startsWith('/login');
+
   // O motor de ANÁLISE é sempre determinístico — toda extração que carrega
   // evidência sai de regras, com ou sem chave de LLM. O que a chave liga é o
   // enriquecimento opcional, sob demanda, por reunião.
@@ -54,7 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
       </head>
       <body className={`${instrument.variable} ${jetbrains.variable} font-sans antialiased`}>
-        <Shell motor={motor}>{children}</Shell>
+        {semShell ? children : <Shell motor={motor}>{children}</Shell>}
       </body>
     </html>
   );

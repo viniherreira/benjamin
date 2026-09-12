@@ -165,6 +165,25 @@ export function Briefing({
               icone: <Gauge size={13} />,
               conteudo: (
                 <Grupo>
+                  {/*
+                    Interesse e poder de decisão são os campos mais fracos da
+                    validação. Exibir o número sem dizer isso empresta a eles
+                    uma precisão que a medição não sustenta — e o lugar de dizer
+                    é aqui, junto da conta, não na capa.
+
+                    O link em vez do número: acurácia publicada na tela envelhece
+                    a cada ajuste de léxico, e número velho no produto é o mesmo
+                    defeito que este projeto passou a semana consertando na
+                    documentação.
+                  */}
+                  <p className="text-[11.5px] leading-relaxed text-ink-faint">
+                    Estes dois scores são estimativa calibrada, não medida. A acurácia de cada campo
+                    é medida sobre o corpus versionado e publicada em{' '}
+                    <a href="/validacao" className="text-accent hover:underline">
+                      Validação
+                    </a>{' '}
+                    — o interesse é hoje o campo mais fraco do motor.
+                  </p>
                   <ScoreCard
                     titulo="Interesse"
                     icone={<Gauge size={14} />}
