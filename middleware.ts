@@ -1,25 +1,25 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { COOKIE_SESSAO, verificarSessao } from '@/lib/auth/sessao';
+import { createServerClient } from '@supabase/ssr';
+import { SUPABASE_CHAVE_PUBLICA, SUPABASE_URL } from '@/lib/auth/supabase-publico';
 
 /**
- * A porta da aplicação.
+ * A porta da aplicação — login por usuário, só para convidados.
  *
- * Sem isto, qualquer um com a URL lê toda transcrição, todo budget e todo risco
- * de churn da base — e chama /api/transcribe, que gasta a chave da OpenAI do
- * dono. O banco já estava protegido de acesso direto por RLS, mas a aplicação
- * fala com ele pela `service_role`, que ignora RLS: quem passa pela aplicação
- * passa por tudo.
+ * O produto guarda transcrição de conversa comercial com cliente identificado.
+ * Toda rota exige sessão válida do Supabase Auth E um convite: linha em
+ * `app_users` com o mesmo e-mail. Ter conta no Auth não basta — se o cadastro
+ * público estiver aberto no projeto, quem se cadastrar sozinho ainda é barrado
+ * aqui.
  *
- * FALHA FECHADA. Sem `BENJAMIN_SENHA` configurada em produção, ninguém entra —
- * inclusive quem fez o deploy. O modo aberto existe só em desenvolvimento, para
- * não exigir configuração de quem roda `npm run dev` na própria máquina; e
- * mesmo lá o console avisa.
+ * A checagem do convite usa a chave pública e o JWT do próprio usuário. A
+ * policy `app_users_select_proprio` deixa cada um ler só a própria linha, então
+ * a consulta volta vazia para quem não foi convidado.
+ *
+ * Substitui a senha compartilhada (BENJAMIN_SENHA), que não identificava ninguém.
  */
 
 const LIVRE = [
   '/login',
-  '/api/login',
-  '/api/logout',
   '/_next',
   '/favicon',
   '/icon',
@@ -31,8 +31,8 @@ const LIVRE = [
 
 /**
  * O layout raiz precisa saber o caminho para não envolver a tela de entrada na
- * navegação do produto — um menu cujos itens todos voltam para o login. Server
- * component não lê a URL, então ela viaja por cabeçalho.
+ * navegação do produto. Server component não lê a URL, então ela viaja por
+ * cabeçalho.
  */
 const CABECALHO_CAMINHO = 'x-benjamin-caminho';
 
@@ -42,36 +42,55 @@ function seguir(req: NextRequest) {
   return NextResponse.next({ request: { headers: h } });
 }
 
-export async function middleware(req: NextRequest) {
+function barrar(req: NextRequest, motivo?: 'convite') {
   const { pathname } = req.nextUrl;
-  if (LIVRE.some((p) => pathname.startsWith(p))) return seguir(req);
 
-  const segredo = process.env.BENJAMIN_SENHA;
-
-  if (!segredo) {
-    if (process.env.NODE_ENV !== 'production') return seguir(req);
-    return new NextResponse(
-      'BENJAMIN_SENHA não está configurada. A aplicação guarda conversa de cliente e ' +
-        'não sobe sem senha: defina a variável de ambiente e reinicie.',
-      { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' } },
-    );
-  }
-
-  const token = req.cookies.get(COOKIE_SESSAO)?.value ?? '';
-  if (await verificarSessao(token, segredo)) return seguir(req);
-
-  /*
-   * Rota de API responde 401 em vez de redirecionar: um fetch que recebe o HTML
-   * do login e tenta fazer JSON.parse dá um erro que não explica nada.
-   */
+  // API responde 401: um fetch que recebe o HTML do login quebra num JSON.parse.
   if (pathname.startsWith('/api/')) {
-    return NextResponse.json({ erro: 'Sessão ausente ou expirada.' }, { status: 401 });
+    return NextResponse.json(
+      { erro: motivo === 'convite' ? 'Usuário sem convite.' : 'Sessão ausente ou expirada.' },
+      { status: 401 },
+    );
   }
 
   const destino = req.nextUrl.clone();
   destino.pathname = '/login';
-  destino.search = pathname === '/' ? '' : `?de=${encodeURIComponent(pathname)}`;
+  const params = new URLSearchParams();
+  if (pathname !== '/') params.set('de', pathname);
+  if (motivo) params.set('motivo', motivo);
+  destino.search = params.toString() ? `?${params}` : '';
   return NextResponse.redirect(destino);
+}
+
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  if (LIVRE.some((p) => pathname.startsWith(p))) return seguir(req);
+
+  let resposta = seguir(req);
+
+  // O Supabase renova o token de acesso pelo cookie; a resposta precisa
+  // devolver o cookie renovado, senão a sessão expira no meio do uso.
+  const supabase = createServerClient(SUPABASE_URL, SUPABASE_CHAVE_PUBLICA, {
+    cookies: {
+      getAll: () => req.cookies.getAll(),
+      setAll: (lista) => {
+        lista.forEach(({ name, value }) => req.cookies.set(name, value));
+        resposta = seguir(req);
+        lista.forEach(({ name, value, options }) => resposta.cookies.set(name, value, options));
+      },
+    },
+  });
+
+  // getUser valida o token no servidor do Auth; getSession só leria o cookie.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) return barrar(req);
+
+  const { data: convite } = await supabase.from('app_users').select('id').limit(1).maybeSingle();
+  if (!convite) return barrar(req, 'convite');
+
+  return resposta;
 }
 
 export const config = {
