@@ -125,6 +125,40 @@ describe('Higiene geral do motor', () => {
     assert.equal(r.objections.length, 0, 'nenhuma objeção foi levantada');
   });
 
+  /*
+   * O léxico de churn cobre família de expressão, não frase literal — essa
+   * lição já custou uma amostra inteira (DEV-13) e está escrita no lexicons.ts.
+   * A conjugação de primeira pessoa do singular tinha escapado da mesma lista:
+   * "não VAMOS renovar" disparava, "não VOU renovar" não. Medido em DEV-03, uma
+   * não-renovação declarada que o motor lia como risco médio.
+   */
+  test('"não vou renovar" pesa igual a "não vamos renovar"', () => {
+    const eu = roda('Patrícia: Carla, eu não vou renovar nas condições atuais.');
+    const nos = roda('Patrícia: Carla, a gente não vamos renovar nas condições atuais.');
+
+    assert.ok(
+      eu.churn_signals.length > 0,
+      'uma não-renovação declarada na primeira pessoa precisa virar sinal de risco',
+    );
+    assert.equal(
+      eu.churn_signals[0]?.weight,
+      nos.churn_signals[0]?.weight,
+      'quem fala por si mesmo não está menos saindo que quem fala pela empresa',
+    );
+  });
+
+  /*
+   * "Abrir concorrência" é o vocabulário de compras para pôr o fornecedor atual
+   * em disputa. Para o incumbente é saída declarada, e cai na mesma família do
+   * `escolher o próximo fornecedor` que o léxico já cobria.
+   */
+  test('"abrir concorrência" é sinal de risco para quem já é o fornecedor', () => {
+    const r = roda(
+      'Otávio: Do jeito que está, a recomendação que vai subir é abrir concorrência.',
+    );
+    assert.ok(r.churn_signals.length > 0, 'pôr o contrato em disputa é risco de perder a conta');
+  });
+
   test('LGPD: CPF e e-mail são mascarados e contabilizados', () => {
     const r = roda('João: Meu CPF é 123.456.789-00 e meu e-mail é joao.silva@empresa.com.br.');
     assert.equal(r.transcript_quality.redacted_entities, 2);

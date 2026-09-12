@@ -83,13 +83,13 @@ propaganda.
 
 | Sinal | Amostras | Mínimo | |
 |---|---|---|---|
-| com concorrente | 10 | 8 | ✅ |
-| com objeção de preço | 9 | 8 | ✅ |
-| com churn claro | 7 | 6 | ✅ |
-| com gatilho de upsell | 16 | 10 | ✅ |
-| com budget declarado | 6 | 6 | ✅ |
+| com concorrente | 13 | 8 | ✅ |
+| com objeção de preço | 10 | 8 | ✅ |
+| com churn claro | 8 | 6 | ✅ |
+| com gatilho de upsell | 17 | 10 | ✅ |
+| com budget declarado | 7 | 6 | ✅ |
 | **sem nenhum sinal** (mede falso positivo) | 8 | 4 | ✅ |
-| oportunidade Techfin | 3 | 3 | ✅ |
+| oportunidade Techfin | 4 | 3 | ✅ |
 | oportunidade RD Station | 2 | 2 | ✅ |
 
 Cinco das amostras formam um **arco narrativo**: a mesma conta (Metalúrgica Vale
@@ -191,7 +191,7 @@ Corpus sintético completo, 37 amostras.
 | sinal de upsell | 0,875 | 0,824 | **0,848** | 17 |
 | produtos TOTVS | 0,786 | 0,917 | **0,846** | 24 |
 | objeções | 0,739 | 0,739 | **0,739** | 23 |
-| sinal de churn | 0,833 | 0,625 | **0,714** | 8 |
+| sinal de churn | 0,875 | 0,875 | **0,875** | 8 |
 | unidade de negócio | 0,833 | 0,625 | **0,714** | 16 |
 | status do produto | 0,591 | 0,867 | **0,703** | 15 |
 | dores | 0,765 | 0,481 | **0,591** | 27 |
@@ -201,7 +201,7 @@ Corpus sintético completo, 37 amostras.
 | Métrica | Taxa | |
 |---|---|---|
 | talk ratio dentro da faixa anotada | 1,000 | 12/12 |
-| banda de churn | 0,757 | 28/37 |
+| banda de churn | 0,811 | 30/37 |
 | sentimento (4 classes) | 0,622 | 23/37 |
 | poder de decisão da persona | 0,541 | 20/37 |
 | interesse dentro da faixa | 0,459 | 17/37 |
@@ -239,7 +239,7 @@ consertar mirando nela transformaria o conjunto cego em conjunto de ajuste.
 | Latência p50 / p95 | ~1,5 ms / 2–4 ms |
 | Throughput (1 processo) | ~30.000 análises/minuto |
 | Custo de API por análise | R$ 0,00 |
-| Delta médio dev → holdout | 0,028 |
+| Delta médio dev → holdout | 0,060 |
 
 **Sobre a latência.** Ela já esteve reportada em ~5 ms de p50, com a DEV-13
 (4.260 caracteres) dominando a cauda. Caiu para ~1,5 ms quando a classificação
@@ -281,13 +281,32 @@ Matriz de confusão (linha = gabarito, coluna = motor):
 |---|---|---|---|
 | **baixo** | 25 | 0 | 0 |
 | **médio** | 4 | 0 | 0 |
-| **alto** | 2 | 3 | 3 |
+| **alto** | 1 | 2 | 5 |
 
 O motor **nunca superestima** risco — nenhuma conta saudável foi marcada como em
 risco, e essa linha se manteve intacta através de todas as mudanças, inclusive
-da ampliação do corpus. Mas das 8 amostras anotadas como risco alto, só 3 são
-classificadas como alto, e **2 caem em baixo**. Num produto de retenção, **falso
-negativo é o erro caro**: é a conta que ninguém foi salvar.
+da ampliação do corpus e da ampliação do léxico de churn. Das 8 amostras
+anotadas como risco alto, 5 são classificadas como alto e **1 ainda cai em
+baixo**. Num produto de retenção, **falso negativo é o erro caro**: é a conta
+que ninguém foi salvar.
+
+Era `2 | 3 | 3` até duas correções de léxico, ambas de recall e ambas com o
+mesmo defeito por trás — a lista cobria a frase e não a família:
+
+- `não vamos renovar` disparava; `não VOU renovar` não. A conjugação de primeira
+  pessoa do singular, que é como fala quem decide sozinho, tinha escapado da
+  alternância. Medido na DEV-03, uma não-renovação declarada com dois
+  concorrentes já com proposta na mesa, que saía como risco médio.
+- `abrir concorrência` — o vocabulário de compras para pôr o fornecedor atual em
+  disputa — não existia, embora `escolher o próximo fornecedor`, da mesma
+  família, existisse.
+
+Efeito: banda de churn 0,757 → **0,811**; sinal de churn F1 0,714 → **0,875**,
+com recall de 0,625 para 0,875. Nenhum F1 do holdout caiu e a banda no holdout
+subiu de 10/15 para 11/15, o que indica que os padrões generalizaram em vez de
+decorar. O `delta médio` dev→holdout subiu de 0,028 para 0,060 pelo motivo
+oposto ao preocupante: dev melhorou mais que holdout num campo, não holdout
+piorou em nenhum.
 
 A banda `médio` continua nunca sendo prevista: as 4 amostras anotadas como médio
 caem todas em baixo. É o ponto mais fraco desta matriz, e piorou em número
@@ -463,7 +482,7 @@ microfone.
 
 ```bash
 npm install
-npm test                  # 70 testes: exemplo canônico, armadilhas, invariantes,
+npm test                  # 72 testes: exemplo canônico, armadilhas, invariantes,
                           #            papel de falante, abstenção dos scores
 npm run validar           # tabela completa de métricas
 npm run validar -- --erros  # erros item a item da partição DEV (holdout não é aberto)
