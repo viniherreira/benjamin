@@ -76,16 +76,33 @@ const MARCAS_FORNECEDOR: Marca[] = [
   { re: /\b(te|lhe) envio (a proposta|o material|depois)\b/, sinal: 'compromisso_de_envio' },
 ];
 
-/** Quem fala de dentro do comprador: a dor é "nossa", o fornecedor é "vocês". */
+/*
+ * Quem fala de dentro do comprador: a dor é "nossa", o fornecedor é "vocês".
+ *
+ * Três expressões saíram desta lista depois de medidas na partição dev, todas
+ * pelo mesmo motivo — os DOIS lados as dizem, e um marcador que os dois lados
+ * dizem não é dêixis, é ruído com sinal trocado. Pior: ele anula os sinais
+ * corretos do mesmo falante, derruba o placar abaixo do limiar e entrega a
+ * decisão ao último recurso.
+ *
+ *   "a gente tem"           o vendedor descrevendo o próprio portfólio
+ *                           ("a gente tem pacote de expansão") — DEV-04
+ *   "o pessoal do/da/de X"  o vendedor se referindo ao time do cliente
+ *                           ("conversa com o pessoal da produção") — DEV-07
+ *   "vocês têm"             pergunta de descoberta, que é o verbo mais comum
+ *                           na boca do vendedor numa call de qualificação
+ *
+ * "vocês cobram" e "vocês entregam" ficam: essas só fazem sentido apontadas
+ * para um fornecedor.
+ */
 const MARCAS_COMPRADOR: Marca[] = [
-  { re: /\b(a gente|nos) (precisa|precisamos|sofre|sofremos|usa|usamos|tem|temos|ta com|estamos com|esta com|nao consegue|nao conseguimos)\b/, sinal: 'dexis_comprador' },
+  { re: /\b(a gente|nos) (precisa|precisamos|sofre|sofremos|usa|usamos|ta com|estamos com|esta com|nao consegue|nao conseguimos)\b/, sinal: 'dexis_comprador' },
   { re: /\bo noss[ao] (time|pessoal|erp|sistema|financeiro|rh|fiscal|controladoria|operacao)\b/, sinal: 'dexis_comprador' },
   { re: /\bnossa empresa\b/, sinal: 'dexis_comprador' },
   { re: /\baqui (na nossa empresa|na empresa|dentro de casa|do nosso lado)\b/, sinal: 'dexis_comprador' },
-  { re: /\bvoces (conseguem|tem|fazem|entregam|cobram|trabalham|atendem)\b/, sinal: 'trata_o_outro_como_fornecedor' },
+  { re: /\bvoces (cobram|entregam|implantam)\b/, sinal: 'trata_o_outro_como_fornecedor' },
   { re: /\b(meu|nosso) (cfo|ceo|cto|coo|diretor|diretora|chefe|socio|gestor)\b/, sinal: 'reporta_a_decisor_interno' },
   { re: /\bpreciso (aprovar|levar|validar|submeter) (com|para|pra|ao|a)\b/, sinal: 'reporta_a_decisor_interno' },
-  { re: /\bo pessoal (do|da|de) \w+/, sinal: 'dexis_comprador' },
 ];
 
 /** Quem abre agradecendo o tempo ou propondo pauta está conduzindo a reunião. */
@@ -365,18 +382,34 @@ export function inferirPapeis(
 
   propagar();
 
-  /* --- 9. Último recurso: ordem de fala. -------------------------------
-   * O corpus de treino tem o vendedor abrindo quase sempre, então este é o
-   * palpite que mais decora formato e menos entende conversa. Ele fica no
-   * fim da fila, declarado nos sinais e com confiança de palpite — para que
-   * a métrica consiga separar "o motor soube" de "o motor chutou".
+  /* --- 9. Último recurso. ----------------------------------------------
+   * Ninguém cruzou o limiar. Vendedor vira quem tem o MAIOR placar, mesmo que
+   * o placar seja fraco ou zero; a ordem de fala só desempata.
+   *
+   * A versão anterior elegia direto quem abriu a reunião, e com isso jogava
+   * fora a evidência que ela mesma tinha acabado de acumular. Nas amostras em
+   * que o cliente abre — inbound, escalada, cotação conduzida pelo comprador —
+   * o falante costumava já estar com placar NEGATIVO, ou seja, com sinal fraco
+   * apontando corretamente para cliente, e era promovido a vendedor assim
+   * mesmo. Isso não gerava um erro: gerava a inversão dos dois lados, que é o
+   * erro que mais estraga o briefing.
+   *
+   * O sinal registrado distingue os dois casos, porque a métrica precisa saber
+   * o que foi chute de verdade: `ordem_de_fala` quando havia empate e só a
+   * ordem decidiu; `placar_fraco` quando existia evidência, ainda que abaixo
+   * do limiar.
    */
   if (!temVendedor()) {
-    const abridor = pessoas.filter((p) => !fixados[p.chave]).sort((a, b) => a.ordem - b.ordem)[0];
-    if (abridor) {
-      abridor.lado = 'vendedor';
-      abridor.confianca = CONFIANCA_ORDEM_DE_FALA;
-      abridor.sinais.push('ordem_de_fala');
+    const candidatos = pessoas
+      .filter((p) => !fixados[p.chave])
+      .sort((a, b) => b.placar - a.placar || a.ordem - b.ordem);
+
+    const eleito = candidatos[0];
+    if (eleito) {
+      const empatado = candidatos.filter((p) => p.placar === eleito.placar).length > 1;
+      eleito.lado = 'vendedor';
+      eleito.confianca = CONFIANCA_ORDEM_DE_FALA;
+      eleito.sinais.push(empatado ? 'ordem_de_fala' : 'placar_fraco');
       propagar();
     }
   }

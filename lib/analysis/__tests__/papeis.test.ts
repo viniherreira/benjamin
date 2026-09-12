@@ -79,6 +79,65 @@ describe('Sinal: dêixis de fornecedor e de comprador', () => {
   });
 });
 
+/*
+ * Um marcador de lado só vale se um lado diz e o outro não. Expressão que os
+ * dois usam não é dêixis, é ruído com sinal trocado — e custa caro, porque
+ * anula os sinais corretos do mesmo falante e derruba o placar abaixo do
+ * limiar, entregando a decisão ao último recurso.
+ *
+ * Os dois casos abaixo saíram da partição dev: em ambos a VENDEDORA estava
+ * acumulando sinal de comprador.
+ */
+describe('Expressão que os dois lados dizem não marca lado', () => {
+  test('"a gente tem" é o vendedor falando do próprio portfólio', () => {
+    const papeis = inferirPapeis([
+      fala('Ana', 'Sobre licenças, a gente tem pacote de expansão que já prevê crescimento.'),
+      fala('Fernanda', 'Qual o investimento?'),
+    ]);
+
+    const ana = papeis.find((p) => p.nome === 'Ana');
+    assert.ok(
+      !ana?.sinais.includes('dexis_comprador'),
+      `"a gente tem" não é marca de comprador — sinais vieram: ${JSON.stringify(ana?.sinais)}`,
+    );
+  });
+
+  test('"o pessoal da produção" é o vendedor falando do time do cliente', () => {
+    const papeis = inferirPapeis([
+      fala('Ana', 'Consigo te propor uma conversa com o pessoal da produção pra entender o cenário deles?'),
+      fala('Ricardo', 'Deixa eu ver como está a agenda deles.'),
+    ]);
+
+    const ana = papeis.find((p) => p.nome === 'Ana');
+    assert.ok(
+      !ana?.sinais.includes('dexis_comprador'),
+      `quem fala "o pessoal da produção" costuma ser quem está de fora — sinais: ${JSON.stringify(ana?.sinais)}`,
+    );
+  });
+
+  test('"vocês têm" é pergunta de descoberta, não marca de comprador', () => {
+    const papeis = inferirPapeis([
+      fala('Ana', 'E vocês têm quantas pessoas no fechamento hoje?'),
+      fala('Marcos', 'Três, às vezes quatro.'),
+    ]);
+
+    const ana = papeis.find((p) => p.nome === 'Ana');
+    assert.ok(
+      !ana?.sinais.includes('trata_o_outro_como_fornecedor'),
+      `numa call de descoberta quem pergunta "vocês têm" é o vendedor — sinais: ${JSON.stringify(ana?.sinais)}`,
+    );
+  });
+
+  test('mas "vocês cobram" continua valendo: só o comprador pergunta preço', () => {
+    const papeis = inferirPapeis([
+      fala('Helena', 'Vocês cobram por usuário?'),
+      fala('Bruno', 'Depende do módulo.'),
+    ]);
+
+    assert.equal(ladoDe(papeis, 'Helena'), 'cliente');
+  });
+});
+
 describe('Sinal: quem pergunta conduz', () => {
   test('sem léxico nenhum, quem faz as perguntas é o vendedor', () => {
     const papeis = inferirPapeis([
@@ -153,6 +212,45 @@ describe('Confiança e último recurso', () => {
     const a = umSinal.find((p) => p.nome === 'Ana')?.confianca ?? 0;
     const b = varios.find((p) => p.nome === 'Ana')?.confianca ?? 0;
     assert.ok(b > a, `esperava confiança maior com mais sinais: ${b} > ${a}`);
+  });
+
+  /*
+   * O último recurso é o palpite mais burro que o motor tem, e por muito tempo
+   * ele foi também o mais arrogante: sobrescrevia o placar já acumulado só
+   * porque o falante tinha aberto a reunião. Nas amostras em que o CLIENTE abre
+   * — inbound, escalada, cotação que o comprador conduz — isso não produzia um
+   * erro, produzia a inversão dos dois lados.
+   *
+   * Ordem de fala é desempate, não veredito.
+   */
+  test('quem abre com sinal de comprador não vira vendedor por ter falado primeiro', () => {
+    const papeis = inferirPapeis([
+      fala('Gilberto', 'Vocês cobram por usuário nomeado?'),
+      fala('Ana', 'Por usuário nomeado.'),
+      fala('Gilberto', 'Tem mínimo de contratação?'),
+      fala('Ana', 'Tem, dez usuários.'),
+    ]);
+
+    assert.equal(ladoDe(papeis, 'Gilberto'), 'cliente');
+    assert.equal(ladoDe(papeis, 'Ana'), 'vendedor');
+  });
+
+  test('turno longo de quem abre pesa mais que a ordem em que abriu', () => {
+    const papeis = inferirPapeis([
+      fala(
+        'Otávio',
+        'O faturamento parou na quinta-feira e ficamos dois dias sem emitir nota fiscal nenhuma, com caminhão carregado parado na doca esperando liberação.',
+      ),
+      fala('Carla', 'Eu vi o chamado.'),
+      fala(
+        'Otávio',
+        'Esse é o terceiro incidente no semestre e sempre a mesma história, abre chamado, espera, e alguém liga depois que o estrago já aconteceu.',
+      ),
+      fala('Carla', 'Vou escalar hoje.'),
+    ]);
+
+    assert.equal(ladoDe(papeis, 'Otávio'), 'cliente');
+    assert.equal(ladoDe(papeis, 'Carla'), 'vendedor');
   });
 
   test('sem nenhum sinal, decide por ordem de fala e diz que foi por isso', () => {

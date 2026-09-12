@@ -97,7 +97,12 @@ function tabela(titulo: string, m: RelatorioMetricas) {
     p(
       `taxa de inversão           ${pa.inversoes.taxa.toFixed(3).padStart(8)}   (${pa.inversoes.amostras}/${pa.inversoes.total} amostras com os lados trocados)`,
     );
-    p(`decidido por ordem de fala  ${String(pa.amostras_por_ordem_de_fala).padStart(7)} amostras (chute, não sinal)`);
+    p(
+      `decidido no último recurso  ${String(pa.amostras_por_ultimo_recurso).padStart(7)} amostras (placar abaixo do limiar)`,
+    );
+    p(
+      `   destas, chute puro       ${String(pa.amostras_por_ordem_de_fala).padStart(7)} amostras (empate: só quem falou primeiro)`,
+    );
   }
 
   p();

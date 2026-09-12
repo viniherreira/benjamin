@@ -85,7 +85,16 @@ export type MetricaPapel = {
    * ganhando ou perdendo.
    */
   baseline_primeiro_a_falar: Acuracia;
-  /** Amostras em que algum lado saiu do último recurso, não de sinal. */
+  /**
+   * Amostras em que ninguém cruzou o limiar e o lado saiu do último recurso.
+   * Inclui as duas variantes: empate resolvido por ordem de fala e eleição por
+   * placar fraco.
+   */
+  amostras_por_ultimo_recurso: number;
+  /**
+   * Destas, quantas foram empate PURO — nenhuma evidência, só quem falou
+   * primeiro. É o número que mede sorte, e o que precisa cair.
+   */
   amostras_por_ordem_de_fala: number;
 };
 
@@ -98,6 +107,7 @@ export function metricaDePapel(itens: ItemPapel[]): MetricaPapel {
   let invertidas = 0;
   let amostrasComPapel = 0;
   let porOrdemDeFala = 0;
+  let porUltimoRecurso = 0;
 
   for (const { speakers, gold } of itens) {
     const esperado = gold.papeis;
@@ -109,6 +119,9 @@ export function metricaDePapel(itens: ItemPapel[]): MetricaPapel {
     const primeiro = speakers[0]?.name.toLowerCase();
 
     if (speakers.some((s) => s.signals.includes('ordem_de_fala'))) porOrdemDeFala++;
+    if (speakers.some((s) => s.signals.includes('ordem_de_fala') || s.signals.includes('placar_fraco'))) {
+      porUltimoRecurso++;
+    }
 
     let decididos = 0;
     let trocados = 0;
@@ -143,6 +156,7 @@ export function metricaDePapel(itens: ItemPapel[]): MetricaPapel {
       taxa: amostrasComPapel === 0 ? 0 : Number((invertidas / amostrasComPapel).toFixed(3)),
     },
     baseline_primeiro_a_falar: acuracia(baselineAcertos, total),
+    amostras_por_ultimo_recurso: porUltimoRecurso,
     amostras_por_ordem_de_fala: porOrdemDeFala,
   };
 }

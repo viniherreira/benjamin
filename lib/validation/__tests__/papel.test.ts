@@ -154,4 +154,31 @@ describe('Quanto do acerto veio de chute', () => {
       'mas só uma amostra sabia por quê — a outra chutou e teve sorte',
     );
   });
+
+  /*
+   * O último recurso tem dois sabores e eles não valem a mesma coisa:
+   * `ordem_de_fala` é empate puro, sem nenhuma evidência; `placar_fraco` usou
+   * sinal real, só que abaixo do limiar. Contar os dois juntos esconderia
+   * quanto do acerto é sorte; contar só o primeiro esconderia quantas decisões
+   * ficaram sem confiança.
+   */
+  test('último recurso por placar fraco conta separado do chute puro', () => {
+    const m = metricaDePapel([
+      {
+        speakers: [falante('Ana', 'vendedor', ['ordem_de_fala']), falante('João', 'cliente', ['propagado'])],
+        gold: gold({ papeis: { ana: 'vendedor', joão: 'cliente' } }),
+      },
+      {
+        speakers: [falante('Carla', 'vendedor', ['placar_fraco']), falante('Otávio', 'cliente', ['propagado'])],
+        gold: gold({ papeis: { carla: 'vendedor', otávio: 'cliente' } }),
+      },
+      {
+        speakers: [falante('Bruno', 'vendedor', ['dexis_fornecedor']), falante('Helena', 'cliente', ['propagado'])],
+        gold: gold({ papeis: { bruno: 'vendedor', helena: 'cliente' } }),
+      },
+    ]);
+
+    assert.equal(m.amostras_por_ordem_de_fala, 1, 'só uma foi empate puro');
+    assert.equal(m.amostras_por_ultimo_recurso, 2, 'duas não cruzaram o limiar');
+  });
 });
