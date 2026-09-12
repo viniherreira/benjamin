@@ -242,10 +242,25 @@ export const SINAIS_CHURN: { padrao: string; peso: number; rotulo: string }[] = 
    *
    * Os padrões daqui para baixo cobrem família de expressão, não frase literal.
    */
-  { padrao: 'nao (?:vamos|pretendemos|pretendo|planejamos|iremos) renovar', peso: 30, rotulo: 'Não pretende renovar' },
+  /*
+   * `vou` faltava na lista, e é a conjugação mais natural de quem decide
+   * sozinho: "eu não vou renovar nas condições atuais" (DEV-03) passava sem
+   * disparar nada, e a amostra — uma não-renovação declarada, com dois
+   * concorrentes já com proposta na mesa — saía como risco MÉDIO.
+   */
+  { padrao: 'nao (?:vou|vamos|pretendemos|pretendo|planejamos|iremos) renovar', peso: 30, rotulo: 'Não pretende renovar' },
   { padrao: '(?:tendencia|intencao) (?:e|de) (?:sair|substituir|trocar)', peso: 28, rotulo: 'Intenção declarada de sair' },
   { padrao: '(?:substituir|trocar) (?:o |a |de )?(?:fornecedor|sistema|erp|solucao|plataforma)', peso: 26, rotulo: 'Fala em substituir o fornecedor' },
   { padrao: '(?:escolher|definir|buscar) (?:o )?proximo fornecedor', peso: 28, rotulo: 'Já escolhe o próximo fornecedor' },
+  /*
+   * Vocabulário de compras: pôr o contrato em disputa. Para quem já é o
+   * fornecedor, é saída declarada — mesma família do padrão acima.
+   *
+   * Ressalva de método: em dev isso só aparece na DEV-16, que foi escrita nesta
+   * mesma leva de trabalho. O padrão entra por critério conceitual, não por
+   * ajuste à amostra; se o holdout não se mover, não houve generalização.
+   */
+  { padrao: 'abrir (?:uma )?concorrencia', peso: 26, rotulo: 'Vai abrir concorrência' },
   { padrao: 'avali\\w+ (?:de |das |as |outras )?(?:alternativas|opcoes)', peso: 22, rotulo: 'Avaliando alternativas' },
   { padrao: '(?:conversamos|conversando|falamos|falando) com (?:dois|tres|outros|outras|mais de um) ?(?:fornecedores|empresas|players)', peso: 24, rotulo: 'Conversando com outros fornecedores' },
   { padrao: 'nao (?:tenho|temos) confianca', peso: 18, rotulo: 'Perdeu a confiança' },

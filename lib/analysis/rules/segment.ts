@@ -1,6 +1,7 @@
 import type { Lado, Sentenca, Turno } from '../types';
 import { redigir } from './redact';
 import type { Redacao } from '../types';
+import { inferirPapeis, type FalaDoTurno, type OpcoesPapeis } from './papeis';
 
 /**
  * Camada de texto do motor.
@@ -65,12 +66,18 @@ function apagar(texto: string, inicio: number, fim: number): string {
  * pergunta contada e o sentimento não consegue separar a fala do cliente da
  * fala do vendedor. Um detalhe de parsing derrubava metade da análise.
  *
- * O cargo depois de travessão ou hífen cercado de espaços é descartado do nome,
- * senão "Ricardo — Diretor Financeiro:" e "Ricardo:" viram dois falantes
- * distintos e o agrupamento de turnos se parte no meio da reunião.
+ * O cargo depois de travessão ou hífen cercado de espaços sai do NOME, senão
+ * "Ricardo — Diretor Financeiro:" e "Ricardo:" viram dois falantes distintos e
+ * o agrupamento de turnos se parte no meio da reunião.
+ *
+ * Sair do nome não é o mesmo que ser jogado fora. O cargo é a evidência mais
+ * direta de papel que existe numa transcrição de Meet ou Teams — "Carla (CSM)"
+ * contra "Ricardo — Diretor Financeiro" resolve a reunião inteira — e por isso
+ * ele é capturado num campo separado e entregue à inferência de papel. O que a
+ * chave de agrupamento não pode é vê-lo.
  */
 const RE_ROTULO =
-  /^[ \t>-]*(?:\[([^\]\n]{2,45})\]|([\p{Lu}][\p{L}.'’ ]{1,40}?)(?:(?:\s*[—–]\s*|\s+-\s+)[^:\n]{1,40})?(?:\s*\([^)\n]{1,30}\))?)\s*:(?:[ \t]|$)/u;
+  /^[ \t>-]*(?:\[([^\]\n]{2,45})\]|([\p{Lu}][\p{L}.'’ ]{1,40}?)(?:(?:\s*[—–]\s*|\s+-\s+)([^:\n]{1,40}))?(?:\s*\(([^)\n]{1,30})\))?)\s*:(?:[ \t]|$)/u;
 
 const PALAVRAS_NAO_FALANTE = new Set([
   'obs', 'nota', 'ps', 'atenção', 'atencao', 'resumo', 'obrigado', 'olha', 'veja',
@@ -99,7 +106,13 @@ function pareceNome(bruto: string): boolean {
   });
 }
 
-type RotuloAchado = { falante: string; inicioRotulo: number; inicioTexto: number };
+type RotuloAchado = {
+  falante: string;
+  /** Cargo ou empresa que vinha colado ao nome. Fora da chave, dentro da análise. */
+  cargo: string | null;
+  inicioRotulo: number;
+  inicioTexto: number;
+};
 
 function acharRotulos(textoSeguro: string): RotuloAchado[] {
   const achados: RotuloAchado[] = [];
@@ -109,12 +122,14 @@ function acharRotulos(textoSeguro: string): RotuloAchado[] {
     const m = RE_ROTULO.exec(linha);
     if (m) {
       const bruto = (m[1] ?? m[2] ?? '').trim();
+      const cargo = (m[3] ?? m[4] ?? '').trim();
       const chave = bruto.toLowerCase().replace(/[.:]/g, '');
       const palavras = chave.split(/\s+/).filter(Boolean).length;
 
       if (bruto && palavras <= 4 && !PALAVRAS_NAO_FALANTE.has(chave) && pareceNome(bruto)) {
         achados.push({
           falante: bruto,
+          cargo: cargo || null,
           inicioRotulo: offset,
           inicioTexto: offset + m[0].length,
         });
@@ -124,42 +139,6 @@ function acharRotulos(textoSeguro: string): RotuloAchado[] {
   }
 
   return achados;
-}
-
-/* ------------------------------------------------------------------ *
- * Classificação de lado
- * ------------------------------------------------------------------ */
-
-const MARCAS_VENDEDOR: RegExp[] = [
-  /\bnossa (solucao|plataforma|ferramenta|equipe|implantacao|consultoria)\b/,
-  /\bnosso (produto|time de implantacao|suporte tecnico)\b/,
-  /\baqui na totvs\b/,
-  /\bna totvs (a gente|nos)\b/,
-  /\bposso te (mostrar|enviar|mandar|apresentar)\b/,
-  /\bvou te (mostrar|enviar|mandar|passar)\b/,
-  /\bconseguimos (entregar|implantar|fazer)\b/,
-  /\bo que a gente entrega\b/,
-  /\bdeixa eu (te mostrar|compartilhar)\b/,
-  /\bfico de (mandar|enviar|passar)\b/,
-];
-
-const MARCAS_CLIENTE: RegExp[] = [
-  /\ba gente (precisa|sofre|usa|tem|ta com|esta com|nao consegue)\b/,
-  /\bo nosso (time|pessoal|erp|sistema|financeiro|rh)\b/,
-  /\bvoces (conseguem|tem|fazem|entregam|cobram)\b/,
-  /\bmeu (cfo|ceo|diretor|chefe|socio)\b/,
-  /\bnossa empresa\b/,
-  /\baqui (na nossa empresa|na empresa|dentro de casa)\b/,
-  /\bpreciso (aprovar|levar|validar) (com|para|pra)\b/,
-  /\bo pessoal (do|da|de)\b/,
-];
-
-function pontuarLado(textoBusca: string): { vendedor: number; cliente: number } {
-  let vendedor = 0;
-  let cliente = 0;
-  for (const re of MARCAS_VENDEDOR) if (re.test(textoBusca)) vendedor++;
-  for (const re of MARCAS_CLIENTE) if (re.test(textoBusca)) cliente++;
-  return { vendedor, cliente };
 }
 
 /* ------------------------------------------------------------------ *
@@ -253,6 +232,13 @@ export type FalanteResumo = {
   palavras: number;
   turnos: number;
   confianca: number;
+  /**
+   * Quais sinais levaram a este lado. Serve à interface — que precisa
+   * responder "por que você achou isso?" na faixa de confirmação — e à
+   * métrica, que precisa separar decisão fundamentada de palpite por ordem
+   * de fala.
+   */
+  sinais: string[];
 };
 
 export type Preparado = {
@@ -290,7 +276,7 @@ const LIMITE_FALANTES = 6;
 
 const contarPalavras = (s: string): number => (s.match(/[\p{L}\p{N}][\p{L}\p{N}'-]*/gu) ?? []).length;
 
-export function preparar(bruto: string): Preparado {
+export function preparar(bruto: string, opcoes?: OpcoesPapeis): Preparado {
   const { texto: textoSeguro, redacoes } = redigir(bruto.replace(/\r\n?/g, '\n'));
 
   // Base de busca: mesmo comprimento, minúsculo, sem acento.
@@ -315,6 +301,7 @@ export function preparar(bruto: string): Preparado {
   const temDiarizacao = rotulos.length >= 2 && distintos.size >= 2;
 
   const turnos: Turno[] = [];
+  const falas: FalaDoTurno[] = [];
 
   if (temDiarizacao) {
     for (let i = 0; i < rotulos.length; i++) {
@@ -322,8 +309,10 @@ export function preparar(bruto: string): Preparado {
       const proximo = rotulos[i + 1];
       const fim = proximo ? proximo.inicioRotulo : textoSeguro.length;
       const conteudo = textoSeguro.slice(atual.inicioTexto, fim);
+      const palavras = contarPalavras(conteudo);
 
       // O rótulo em si sai da base de busca — "Ana:" não é conteúdo dito.
+      // O cargo vai junto: ele já foi capturado, e como texto falado não é.
       textoBusca = apagar(textoBusca, atual.inicioRotulo, atual.inicioTexto);
 
       turnos.push({
@@ -333,12 +322,27 @@ export function preparar(bruto: string): Preparado {
         inicio: atual.inicioTexto,
         fim,
         texto: conteudo.trim(),
-        palavras: contarPalavras(conteudo),
+        palavras,
+      });
+
+      falas.push({
+        falante: atual.falante,
+        texto: conteudo.trim(),
+        palavras,
+        cargo: atual.cargo,
       });
     }
   }
 
-  // Lado de cada falante, somando as marcas de todos os turnos dele.
+  /*
+   * Lado de cada falante.
+   *
+   * A decisão em si mora em `papeis.ts`. Aqui ficou só a costura: montar as
+   * falas, chamar a inferência e espalhar o resultado pelos turnos. Esta
+   * função já anonimiza, diariza e fatia sentenças — classificar papel era o
+   * quarto trabalho, e o único que dava para testar sem construir um
+   * `Preparado` inteiro.
+   */
   const falantes: FalanteResumo[] = [];
 
   if (temDiarizacao) {
@@ -350,87 +354,16 @@ export function preparar(bruto: string): Preparado {
       porFalante.set(chave, lista);
     }
 
-    const pontos = new Map<string, { vendedor: number; cliente: number }>();
-    for (const [chave, lista] of porFalante) {
-      const junto = lista.map((t) => dobrar(t.texto)).join(' ');
-      pontos.set(chave, pontuarLado(junto));
-    }
-
-    for (const [chave, lista] of porFalante) {
-      const p = pontos.get(chave) ?? { vendedor: 0, cliente: 0 };
-      let lado: Lado = 'desconhecido';
-      let confianca = 0;
-
-      if (p.vendedor > p.cliente) {
-        lado = 'vendedor';
-        confianca = Math.min(1, (p.vendedor - p.cliente) / 3);
-      } else if (p.cliente > p.vendedor) {
-        lado = 'cliente';
-        confianca = Math.min(1, (p.cliente - p.vendedor) / 3);
-      }
-
-      const primeiro = lista[0] as Turno;
+    for (const papel of inferirPapeis(falas, opcoes)) {
+      const lista = porFalante.get(papel.nome.toLowerCase()) ?? [];
       falantes.push({
-        nome: primeiro.falante,
-        lado,
+        nome: papel.nome,
+        lado: papel.lado,
         palavras: lista.reduce((s, t) => s + t.palavras, 0),
         turnos: lista.length,
-        confianca: Number(confianca.toFixed(2)),
+        confianca: Number(papel.confianca.toFixed(2)),
+        sinais: papel.sinais,
       });
-    }
-
-    /*
-     * Desempate.
-     *
-     * O critério anterior só funcionava com exatamente dois falantes. Reunião
-     * comercial real costuma ter três — um vendedor e dois do lado do cliente —
-     * e nesse caso ninguém era classificado, o talk ratio voltava nulo e o
-     * sentimento perdia o filtro de fala do cliente.
-     *
-     * Dois passos, do mais forte para o mais fraco.
-     */
-
-    // 1. Quem pergunta é quem conduz. Numa call de descoberta o vendedor
-    //    pergunta e o cliente responde; é um sinal estrutural, que não depende
-    //    de o falante ter usado alguma expressão específica do léxico.
-    if (!falantes.some((f) => f.lado === 'vendedor')) {
-      const taxa: { chave: string; valor: number }[] = [];
-      for (const [chave, lista] of porFalante) {
-        const comPergunta = lista.filter((t) => t.texto.includes('?')).length;
-        taxa.push({ chave, valor: lista.length > 0 ? comPergunta / lista.length : 0 });
-      }
-      taxa.sort((a, b) => b.valor - a.valor);
-
-      const lider = taxa[0];
-      const segundo = taxa[1];
-      // Exige destaque real: metade dos turnos com pergunta e o dobro do segundo.
-      if (lider && segundo && lider.valor >= 0.5 && lider.valor >= segundo.valor * 2) {
-        const f = falantes.find((x) => x.nome.toLowerCase() === lider.chave);
-        if (f && f.lado === 'desconhecido') {
-          f.lado = 'vendedor';
-          f.confianca = 0.4;
-        }
-      }
-    }
-
-    // 2. Propagação. Achado o vendedor, quem sobra está do outro lado da mesa —
-    //    vale para dois falantes e para dez.
-    const vendedores = falantes.filter((f) => f.lado === 'vendedor');
-    const desconhecidos = falantes.filter((f) => f.lado === 'desconhecido');
-
-    if (vendedores.length > 0) {
-      for (const f of desconhecidos) {
-        f.lado = 'cliente';
-        f.confianca = 0.3;
-      }
-    } else if (falantes.length === 2 && desconhecidos.length === 1) {
-      // Só um lado identificado e dois falantes: o outro é o oposto.
-      const conhecido = falantes.find((f) => f.lado !== 'desconhecido');
-      const alvo = desconhecidos[0] as FalanteResumo;
-      if (conhecido) {
-        alvo.lado = conhecido.lado === 'vendedor' ? 'cliente' : 'vendedor';
-        alvo.confianca = 0.3;
-      }
     }
 
     const ladoDe = new Map(falantes.map((f) => [f.nome.toLowerCase(), f]));

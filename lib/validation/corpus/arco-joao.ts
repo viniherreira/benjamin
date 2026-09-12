@@ -37,6 +37,7 @@ João Silva: Pode. Mas olha, não adianta ser bonito na tela e depois na prátic
 Ana Torres: Justo. Vou montar com um cenário parecido com o de vocês. Fico de te mandar duas opções de data até quinta.
 João Silva: Beleza, tô no aguardo então.`,
     gold: gold({
+      papeis: { 'ana torres': 'vendedor', 'joão silva': 'cliente' },
       produtos: [
         { nome: 'TOTVS Protheus', status: 'em_uso' },
         { nome: 'TOTVS RM', status: 'oportunidade' },
@@ -82,6 +83,7 @@ Ana Torres: Posso montar uma proposta com escopo faseado, começando só pela fo
 João Silva: Aí muda de figura. Manda essa versão que eu olho com carinho.
 Ana Torres: Fechado. Te mando até terça.`,
     gold: gold({
+      papeis: { 'ana torres': 'vendedor', 'joão silva': 'cliente' },
       produtos: [
         { nome: 'TOTVS Protheus', status: 'em_uso' },
         { nome: 'TOTVS RM', status: 'avaliando' },
@@ -126,6 +128,7 @@ João Silva: Vou levar isso em consideração.
 Ana Torres: Vou te mandar um comparativo de escopo até sexta pra te ajudar nessa conversa.
 João Silva: Pode mandar.`,
     gold: gold({
+      papeis: { 'ana torres': 'vendedor', 'joão silva': 'cliente' },
       produtos: [{ nome: 'Folha de Pagamento', status: 'oportunidade' }],
       concorrentes: [{ nome: 'Senior Sistemas', ativo: true }],
       objecoes: ['preco', 'autoridade'],
@@ -163,6 +166,7 @@ João Silva: Isso ajuda.
 Ana Torres: Marco pra quinta que vem?
 João Silva: Pode marcar.`,
     gold: gold({
+      papeis: { 'ana torres': 'vendedor', 'joão silva': 'cliente' },
       produtos: [{ nome: 'TOTVS RM', status: 'avaliando' }],
       concorrentes: [{ nome: 'Senior Sistemas', ativo: true }],
       objecoes: ['preco', 'tecnica', 'concorrencia'],
@@ -199,6 +203,7 @@ Ana Torres: Te mando até dia dezoito então, com folga.
 João Silva: Combinado. E Ana, obrigado pela paciência com esse processo, viu. Foi longo mas você não empurrou nada goela abaixo.
 Ana Torres: Imagina, João. A gente quer que dê certo depois da assinatura também.`,
     gold: gold({
+      papeis: { 'ana torres': 'vendedor', 'joão silva': 'cliente' },
       produtos: [{ nome: 'TOTVS RM', status: 'avaliando' }],
       objecoes: ['autoridade'],
       dores: [],

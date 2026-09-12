@@ -1,4 +1,4 @@
-import type { AnalysisResult } from '../analysis/types';
+import type { AnalysisResult, FalanteInferido } from '../analysis/types';
 import type { Amostra, Gabarito } from './tipos';
 
 /**
@@ -58,6 +58,110 @@ const acuracia = (acertos: number, total: number): Acuracia => ({
 });
 
 /* ------------------------------------------------------------------ *
+ * Papel de falante
+ * ------------------------------------------------------------------ */
+
+export type MetricaPapel = {
+  /** Acurácia falante a falante. Denominador é o gabarito, não o que o motor viu. */
+  por_falante: Acuracia;
+  /**
+   * Amostras em que o motor decidiu os dois lados e trocou TODOS de lugar.
+   *
+   * Precisa de número próprio porque não é "mais um erro": inverter troca o
+   * talk ratio, põe a fala do vendedor no lugar da voz do cliente e faz o
+   * briefing inteiro mentir com aparência de certeza. Um lado errado e outro
+   * certo estraga menos que os dois trocados.
+   *
+   * Campo próprio em vez de `Acuracia` porque aqui `amostras` conta ERRO —
+   * chamar de "acertos" faria a leitura do relatório mentir.
+   */
+  inversoes: { amostras: number; total: number; taxa: number };
+  /**
+   * Baseline burro: quem fala primeiro é o vendedor, todo o resto é cliente.
+   *
+   * O corpus foi escrito pela própria equipe e nele o vendedor quase sempre
+   * abre. Se a inferência não bate este número com folga, ela decorou o
+   * formato do corpus em vez de aprender a conversa. Vai para o relatório
+   * ganhando ou perdendo.
+   */
+  baseline_primeiro_a_falar: Acuracia;
+  /**
+   * Amostras em que ninguém cruzou o limiar e o lado saiu do último recurso.
+   * Inclui as duas variantes: empate resolvido por ordem de fala e eleição por
+   * placar fraco.
+   */
+  amostras_por_ultimo_recurso: number;
+  /**
+   * Destas, quantas foram empate PURO — nenhuma evidência, só quem falou
+   * primeiro. É o número que mede sorte, e o que precisa cair.
+   */
+  amostras_por_ordem_de_fala: number;
+};
+
+export type ItemPapel = { speakers: FalanteInferido[]; gold: Gabarito };
+
+export function metricaDePapel(itens: ItemPapel[]): MetricaPapel {
+  let acertos = 0;
+  let total = 0;
+  let baselineAcertos = 0;
+  let invertidas = 0;
+  let amostrasComPapel = 0;
+  let porOrdemDeFala = 0;
+  let porUltimoRecurso = 0;
+
+  for (const { speakers, gold } of itens) {
+    const esperado = gold.papeis;
+    if (!esperado || Object.keys(esperado).length === 0) continue;
+    amostrasComPapel++;
+
+    const ditos = new Map(speakers.map((s) => [s.name.toLowerCase(), s]));
+    // A ordem de `speakers` é a ordem de entrada na conversa.
+    const primeiro = speakers[0]?.name.toLowerCase();
+
+    if (speakers.some((s) => s.signals.includes('ordem_de_fala'))) porOrdemDeFala++;
+    if (speakers.some((s) => s.signals.includes('ordem_de_fala') || s.signals.includes('placar_fraco'))) {
+      porUltimoRecurso++;
+    }
+
+    let decididos = 0;
+    let trocados = 0;
+
+    for (const [nome, ladoGold] of Object.entries(esperado)) {
+      total++;
+
+      const dito = ditos.get(nome);
+      // Falante anotado que o parser não produziu é erro, não desconto no
+      // denominador — senão o motor melhora a nota deixando de ver gente.
+      if (dito && dito.side === ladoGold) acertos++;
+
+      if (dito && dito.side !== 'desconhecido') {
+        decididos++;
+        if (dito.side !== ladoGold) trocados++;
+      }
+
+      const chuteBaseline = nome === primeiro ? 'vendedor' : 'cliente';
+      if (chuteBaseline === ladoGold) baselineAcertos++;
+    }
+
+    // Inversão exige que o motor tenha decidido TODOS e errado TODOS.
+    const anotados = Object.keys(esperado).length;
+    if (decididos === anotados && trocados === anotados) invertidas++;
+  }
+
+  return {
+    por_falante: acuracia(acertos, total),
+    inversoes: {
+      amostras: invertidas,
+      total: amostrasComPapel,
+      taxa: amostrasComPapel === 0 ? 0 : Number((invertidas / amostrasComPapel).toFixed(3)),
+    },
+    baseline_primeiro_a_falar: acuracia(baselineAcertos, total),
+    amostras_por_ultimo_recurso: porUltimoRecurso,
+    amostras_por_ordem_de_fala: porOrdemDeFala,
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * Execução
  * ------------------------------------------------------------------ */
 
@@ -77,6 +181,7 @@ export type RelatorioMetricas = {
   mae: Record<string, number>;
   matriz_churn: Record<string, Record<string, number>>;
   cobertura_evidencia: number;
+  papel: MetricaPapel;
   falso_positivo_sem_sinal: Record<string, number>;
   latencia: { p50: number; p95: number; media: number; total_ms: number };
   throughput_por_min: number;
@@ -139,6 +244,8 @@ export function calcularMetricas(resultados: ResultadoAmostra[]): RelatorioMetri
   };
 
   let sentimentoOk = 0;
+  let interesseTotal = 0;
+  let churnTotal = 0;
   let poderOk = 0;
   let interesseNaFaixa = 0;
   let churnBandaOk = 0;
@@ -210,15 +317,27 @@ export function calcularMetricas(resultados: ResultadoAmostra[]): RelatorioMetri
     if (a.sentiment === g.sentimento) sentimentoOk++;
     if (a.persona.decision_power === g.poder_decisao) poderOk++;
 
-    const [minI, maxI] = g.interesse;
-    if (a.interest_score >= minI && a.interest_score <= maxI) interesseNaFaixa++;
-    const meio = (minI + maxI) / 2;
-    erroInteresse += Math.abs(a.interest_score - meio);
+    /*
+     * Score abstido não entra na conta — mesma regra que o talk ratio já
+     * seguia quando volta null. O denominador encolhe e aparece no relatório
+     * como (acertos/total), então abster-se demais fica visível em vez de
+     * virar nota alta de graça.
+     */
+    if (a.interest_score !== null) {
+      interesseTotal++;
+      const [minI, maxI] = g.interesse;
+      if (a.interest_score >= minI && a.interest_score <= maxI) interesseNaFaixa++;
+      const meio = (minI + maxI) / 2;
+      erroInteresse += Math.abs(a.interest_score - meio);
+    }
 
-    const banda = a.churn_risk >= 67 ? 'alto' : a.churn_risk >= 34 ? 'medio' : 'baixo';
-    const linha = matriz[g.churn_risco];
-    if (linha) linha[banda] = (linha[banda] ?? 0) + 1;
-    if (banda === g.churn_risco) churnBandaOk++;
+    if (a.churn_risk !== null) {
+      churnTotal++;
+      const banda = a.churn_risk >= 67 ? 'alto' : a.churn_risk >= 34 ? 'medio' : 'baixo';
+      const linha = matriz[g.churn_risco];
+      if (linha) linha[banda] = (linha[banda] ?? 0) + 1;
+      if (banda === g.churn_risco) churnBandaOk++;
+    }
 
     if (g.talk_ratio_vendedor && a.conversation_metrics.talk_ratio_seller !== null) {
       talkTotal++;
@@ -269,15 +388,16 @@ export function calcularMetricas(resultados: ResultadoAmostra[]): RelatorioMetri
     acuracias: {
       'sentimento (4 classes)': acuracia(sentimentoOk, n),
       'poder de decisão': acuracia(poderOk, n),
-      'interesse na faixa': acuracia(interesseNaFaixa, n),
-      'banda de churn': acuracia(churnBandaOk, n),
+      'interesse na faixa': acuracia(interesseNaFaixa, interesseTotal),
+      'banda de churn': acuracia(churnBandaOk, churnTotal),
       'talk ratio na faixa': acuracia(talkOk, talkTotal),
     },
     mae: {
-      interesse: n === 0 ? 0 : Number((erroInteresse / n).toFixed(1)),
+      interesse: interesseTotal === 0 ? 0 : Number((erroInteresse / interesseTotal).toFixed(1)),
       talk_ratio: talkTotal === 0 ? 0 : Number((erroTalk / talkTotal).toFixed(3)),
     },
     matriz_churn: matriz,
+    papel: metricaDePapel(resultados.map((r) => ({ speakers: r.analise.speakers, gold: r.gold }))),
     cobertura_evidencia: evidTotal === 0 ? 1 : Number((evidComp / evidTotal).toFixed(4)),
     falso_positivo_sem_sinal: {
       amostras: fpSemSinal.amostras,

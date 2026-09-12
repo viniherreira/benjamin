@@ -12,6 +12,16 @@ import type {
 import { CATEGORIAS_DOR } from './lexicons';
 
 /**
+ * O enum de ameaça é `media`, sem acento, porque é chave de dado. Interpolado
+ * direto na frase ele vaza para o texto que o vendedor lê — "ameaça media".
+ */
+const AMEACA_ESCRITA: Record<'alta' | 'media' | 'baixa', string> = {
+  alta: 'alta',
+  media: 'média',
+  baixa: 'baixa',
+};
+
+/**
  * Resumo extrativo.
  *
  * Com o motor rodando só em regras, o resumo é montado a partir dos fatos já
@@ -86,7 +96,7 @@ export function montarResumo(d: DadosResumo): string {
   const ativo = d.concorrentes.find((c) => c.active);
   if (ativo) {
     frases.push(
-      `${ativo.name} está na mesa com ameaça ${ativo.threat} — precisa ser endereçado antes do próximo passo.`,
+      `${ativo.name} está na mesa com ameaça ${AMEACA_ESCRITA[ativo.threat]} — precisa ser endereçado antes do próximo passo.`,
     );
   }
 

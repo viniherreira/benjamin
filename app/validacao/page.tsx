@@ -98,8 +98,10 @@ export default async function ValidacaoPage() {
         pergunta="A rubrica pede isso em primeiro lugar. Cada base é declarada pelo que ela é."
         icone={<Mic size={14} />}
       >
-        <div className="grid gap-4 lg:grid-cols-2">
+        <section className="vidro rounded-xl p-5">
+          <div className="grid gap-x-8 gap-y-7 lg:grid-cols-2 lg:[&>*+*]:border-l lg:[&>*+*]:border-line lg:[&>*+*]:pl-8">
           <Card
+            plano
             titulo="Corpus A — REAL"
             legenda="Reuniões de role-play gravadas pelo squad"
             acoes={
@@ -135,6 +137,7 @@ export default async function ValidacaoPage() {
           </Card>
 
           <Card
+            plano
             titulo="Corpus B — SINTÉTICO"
             legenda="Complemento para cobrir o que 12 reuniões não cobrem"
             acoes={<Badge tom="accent">{cob.total}</Badge>}
@@ -176,7 +179,8 @@ export default async function ValidacaoPage() {
               </ul>
             </div>
           </Card>
-        </div>
+          </div>
+        </section>
       </Secao>
 
       {/* b) TRATAMENTO */}
@@ -305,8 +309,9 @@ export default async function ValidacaoPage() {
         pergunta="O motor, o contrato de saída e a regra que sustenta a confiabilidade."
         icone={<Cpu size={14} />}
       >
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card titulo="Motor determinístico" legenda="Regras em PT-BR, sem chamada de API">
+        <section className="vidro rounded-xl p-5">
+          <div className="grid gap-x-8 gap-y-7 lg:grid-cols-3 lg:[&>*+*]:border-l lg:[&>*+*]:border-line lg:[&>*+*]:pl-8">
+          <Card plano titulo="Motor determinístico" legenda="Regras em PT-BR, sem chamada de API">
             <ul className="space-y-1.5 text-[11.5px] leading-relaxed text-ink-dim">
               <li>Mesma entrada produz sempre a mesma saída — a demonstração não depende de sorte.</li>
               <li>Custo de API por análise: R$ 0,00.</li>
@@ -318,7 +323,7 @@ export default async function ValidacaoPage() {
             </ul>
           </Card>
 
-          <Card titulo="Evidência obrigatória" legenda="A regra que separa extração de invenção">
+          <Card plano titulo="Evidência obrigatória" legenda="A regra que separa extração de invenção">
             <p className="text-[11.5px] leading-relaxed text-ink-dim">
               Todo item extraído carrega a citação literal e o índice de caractere no texto seguro. Item
               sem evidência rastreável não é retornado.
@@ -331,7 +336,7 @@ export default async function ValidacaoPage() {
             </p>
           </Card>
 
-          <Card titulo="Contrato de saída" legenda="TypeScript puro, sem I/O">
+          <Card plano titulo="Contrato de saída" legenda="TypeScript puro, sem I/O">
             <p className="text-[11.5px] leading-relaxed text-ink-dim">
               O motor recebe <span className="font-mono">(texto, memória do cliente)</span> e devolve um
               objeto tipado. Não conhece Next, não conhece Supabase, não faz rede — é isso que permite
@@ -342,7 +347,8 @@ export default async function ValidacaoPage() {
               exibido. Se não bater, é bug.
             </p>
           </Card>
-        </div>
+          </div>
+        </section>
 
         {/* IH + IA */}
         <div className="mt-4">

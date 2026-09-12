@@ -36,7 +36,10 @@ import { existe } from './util';
 export function analisarComRegras(entrada: EntradaAnalise): AnalysisResult {
   const t0 = performance.now();
 
-  const prep = preparar(entrada.texto);
+  const prep = preparar(entrada.texto, {
+    empresaVendedora: entrada.empresaVendedora,
+    papeisFixados: entrada.papeisFixados,
+  });
   const dataReuniao = entrada.dataReuniao ?? new Date().toISOString().slice(0, 10);
 
   // --- Extração ---
@@ -157,16 +160,37 @@ export function analisarComRegras(entrada: EntradaAnalise): AnalysisResult {
     trust_signals: conf.trust_signals,
 
     conversation_metrics,
+    speakers: prep.falantes.map((f) => ({
+      name: f.nome,
+      side: f.lado,
+      confidence: f.confianca,
+      signals: f.sinais,
+      words: f.palavras,
+      turns: f.turnos,
+    })),
     transcript_quality,
     bant,
 
-    interest_score,
-    churn_risk: churn.churn_risk,
-    score_factors,
-    churn_factors: churn.fatores,
+    /*
+     * Abstenção. Sem conseguir separar a fala do cliente da do vendedor, estes
+     * dois números não são estimativa ruim — são invenção, e no extremo da
+     * escala. Medido numa transcrição de áudio real sem diarização: churn 100 e
+     * interesse 12 numa conversa em que o cliente diz "não é que a gente já
+     * decidiu sair" e "prefiro resolver com vocês". Os três sinais de risco que
+     * produziram isso eram o cliente argumentando CONTRA a saída.
+     *
+     * Os fatores vão junto: conta vazia não pode parecer conta zerada na tela.
+     */
+    interest_score: transcript_quality.scores_atribuiveis ? interest_score : null,
+    churn_risk: transcript_quality.scores_atribuiveis ? churn.churn_risk : null,
+    score_factors: transcript_quality.scores_atribuiveis ? score_factors : [],
+    churn_factors: transcript_quality.scores_atribuiveis ? churn.fatores : [],
 
     business_value: {
-      revenue_at_risk: contrato !== null && churn.churn_risk >= 67 ? contrato : null,
+      revenue_at_risk:
+        contrato !== null && transcript_quality.scores_atribuiveis && churn.churn_risk >= 67
+          ? contrato
+          : null,
       pipeline_value: pipeline > 0 ? Math.round(pipeline) : null,
       assumptions,
     },

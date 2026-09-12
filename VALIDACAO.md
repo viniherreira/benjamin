@@ -42,14 +42,32 @@ transcrição real tem ruído que texto escrito não reproduz.
 
 ### Corpus B — SINTÉTICO (complemento)
 
-**31 amostras** em 16 cenários distintos, divididas em duas partições:
+**37 amostras** em 22 cenários distintos, divididas em duas partições:
 
 | Partição | Amostras | Papel |
 |---|---|---|
-| `dev` | 18 | Os erros são lidos e usados para ajustar léxico e pesos |
-| `holdout` | 13 | **Nunca inspecionada item a item.** Só métrica agregada |
+| `dev` | 22 | Os erros são lidos e usados para ajustar léxico e pesos |
+| `holdout` | 15 | **Nunca inspecionada item a item.** Só métrica agregada |
 
-A trigésima primeira (DEV-13) entrou depois das outras e por um motivo diferente:
+As seis últimas entraram por um motivo que vale registrar, porque é um erro
+nosso. Nas 31 primeiras o vendedor abria a reunião em **100% das vezes**. Quando
+a métrica de papel de falante foi construída, o baseline burro — *"quem fala
+primeiro é o vendedor"* — acertou 63 de 63. Um chute perfeito por construção:
+enquanto aquilo valesse, nenhuma inferência conseguiria ganhar dele, no máximo
+empatar, e a métrica não media o motor, media o quanto o corpus era previsível.
+
+As seis novas quebram a regularidade — em todas o **cliente** abre a conversa,
+em situações correntes em campo: inbound, escalada, cotação conduzida pelo
+comprador, QBR que o cliente puxa, renovação que o cliente antecipa, e comitê do
+cliente convocando o fornecedor. Quatro foram para `dev` e duas para `holdout`.
+
+O desenho original previa só `dev`. Foram para as duas partições porque, com o
+holdout sem nenhuma amostra em que o cliente abre, a acurácia de papel medida
+nele continuaria sem significado para sempre. As duas de holdout foram escritas
+como cenários realistas, não como armadilhas construídas a partir de falha já
+observada, e o erro individual delas segue fechado a diagnóstico.
+
+A DEV-13 entrou antes delas e por um motivo diferente:
 as trinta primeiras foram escritas para cobrir cenários, esta foi escrita porque
 **o motor errou nela**. Ela vai para `dev`, nunca para holdout, e a razão precisa
 estar dita: nós a analisamos em detalhe antes de corrigir o motor. Amostra
@@ -65,13 +83,13 @@ propaganda.
 
 | Sinal | Amostras | Mínimo | |
 |---|---|---|---|
-| com concorrente | 10 | 8 | ✅ |
-| com objeção de preço | 9 | 8 | ✅ |
-| com churn claro | 7 | 6 | ✅ |
-| com gatilho de upsell | 16 | 10 | ✅ |
-| com budget declarado | 6 | 6 | ✅ |
+| com concorrente | 13 | 8 | ✅ |
+| com objeção de preço | 10 | 8 | ✅ |
+| com churn claro | 8 | 6 | ✅ |
+| com gatilho de upsell | 17 | 10 | ✅ |
+| com budget declarado | 7 | 6 | ✅ |
 | **sem nenhum sinal** (mede falso positivo) | 8 | 4 | ✅ |
-| oportunidade Techfin | 3 | 3 | ✅ |
+| oportunidade Techfin | 4 | 3 | ✅ |
 | oportunidade RD Station | 2 | 2 | ✅ |
 
 Cinco das amostras formam um **arco narrativo**: a mesma conta (Metalúrgica Vale
@@ -161,48 +179,73 @@ esperar que ninguém pergunte.
 
 ## 4. Métricas — última execução
 
-Corpus sintético completo, 31 amostras.
+Corpus sintético completo, 37 amostras.
 
 ### Precisão, recall e F1
 
 | Campo | Precisão | Recall | F1 | Suporte |
 |---|---|---|---|---|
-| budget | 1,000 | 1,000 | **1,000** | 6 |
-| concorrentes | 0,917 | 1,000 | **0,957** | 11 |
-| concorrente ativo | 0,818 | 1,000 | **0,900** | 9 |
-| sinal de upsell | 0,929 | 0,813 | **0,867** | 16 |
-| produtos TOTVS | 0,815 | 0,917 | **0,863** | 24 |
-| sinal de churn | 1,000 | 0,714 | **0,833** | 7 |
-| objeções | 0,773 | 0,850 | **0,810** | 20 |
-| unidade de negócio | 0,818 | 0,692 | **0,750** | 13 |
+| budget | 1,000 | 1,000 | **1,000** | 7 |
+| concorrentes | 0,933 | 1,000 | **0,966** | 14 |
+| concorrente ativo | 0,786 | 1,000 | **0,880** | 11 |
+| sinal de upsell | 0,875 | 0,824 | **0,848** | 17 |
+| produtos TOTVS | 0,786 | 0,917 | **0,846** | 24 |
+| objeções | 0,739 | 0,739 | **0,739** | 23 |
+| sinal de churn | 0,875 | 0,875 | **0,875** | 8 |
+| unidade de negócio | 0,833 | 0,625 | **0,714** | 16 |
 | status do produto | 0,591 | 0,867 | **0,703** | 15 |
-| dores | 0,714 | 0,476 | **0,571** | 21 |
+| dores | 0,765 | 0,481 | **0,591** | 27 |
 
 ### Acurácia
 
 | Métrica | Taxa | |
 |---|---|---|
-| talk ratio dentro da faixa anotada | 0,900 | 9/10 |
-| banda de churn | 0,774 | 24/31 |
-| poder de decisão da persona | 0,645 | 20/31 |
-| sentimento (4 classes) | 0,548 | 17/31 |
-| interesse dentro da faixa | 0,516 | 16/31 |
+| talk ratio dentro da faixa anotada | 1,000 | 12/12 |
+| banda de churn | 0,811 | 30/37 |
+| sentimento (4 classes) | 0,622 | 23/37 |
+| poder de decisão da persona | 0,541 | 20/37 |
+| interesse dentro da faixa | 0,459 | 17/37 |
+
+### Papel de falante — a métrica com baseline
+
+Quem é o vendedor e quem é o cliente decide talk ratio, voz do cliente e o
+filtro de sentimento. Trocar os dois lados não é um erro a mais: é o erro que
+faz o briefing inteiro mentir com aparência de certeza, e por isso tem número
+próprio.
+
+| Métrica | Valor | |
+|---|---|---|
+| acurácia por falante | **0,948** | 73/77 |
+| baseline *"quem abre vende"* | 0,844 | 65/77 |
+| **folga sobre o baseline** | **+0,104** | |
+| taxa de inversão | 0,027 | 1/37 amostras |
+| decidido no último recurso | | 12 amostras |
+| destas, chute puro por ordem de fala | | 4 amostras |
+
+O baseline não é decoração: ele é a defesa contra decorar o formato do corpus.
+Uma acurácia de 0,948 que não batesse o chute burro não valeria nada, e por duas
+execuções foi exatamente esse o caso — ver a seção 5.4.
+
+A única inversão restante está no holdout e **não foi corrigida de propósito**:
+consertar mirando nela transformaria o conjunto cego em conjunto de ajuste.
 
 ### Erro, evidência e desempenho
 
 | Métrica | Valor |
 |---|---|
-| MAE do interest score | 18 pontos |
-| MAE do talk ratio | 0,067 |
+| MAE do interest score | 19,9 pontos |
+| MAE do talk ratio | 0,045 |
 | **Cobertura de evidência** | **100,00%** |
-| Latência p50 / p95 | ~5 ms / 9–15 ms |
-| Throughput (1 processo) | ~8.000 análises/minuto |
+| Latência p50 / p95 | ~1,5 ms / 2–4 ms |
+| Throughput (1 processo) | ~30.000 análises/minuto |
 | Custo de API por análise | R$ 0,00 |
+| Delta médio dev → holdout | 0,060 |
 
-**Por que a latência subiu.** A tabela anterior reportava p50 de 1,75 ms e p95 de
-3,7 ms sobre 30 amostras curtas. A DEV-13 tem 4.260 caracteres — três vezes a
-maior das anteriores — e domina a cauda. O número novo é o custo real de analisar
-uma transcrição de reunião de verdade, não uma amostra de laboratório.
+**Sobre a latência.** Ela já esteve reportada em ~5 ms de p50, com a DEV-13
+(4.260 caracteres) dominando a cauda. Caiu para ~1,5 ms quando a classificação
+de papel saiu do meio do `segment.ts` e virou módulo próprio: o caminho antigo
+rodava dezoito regexes sobre o texto concatenado de cada falante, o novo sai
+cedo. Ganho de arquitetura, não de otimização — não era o objetivo da mudança.
 
 Duas medições que vale registrar. A primeira análise de um processo novo custa
 **1.612 ms**; a mediana das seguintes é **21,8 ms** para a mesma entrada. É
@@ -236,18 +279,44 @@ Matriz de confusão (linha = gabarito, coluna = motor):
 
 | | baixo | médio | alto |
 |---|---|---|---|
-| **baixo** | 21 | 0 | 0 |
-| **médio** | 3 | 0 | 0 |
-| **alto** | 1 | 3 | 3 |
+| **baixo** | 25 | 0 | 0 |
+| **médio** | 4 | 0 | 0 |
+| **alto** | 1 | 2 | 5 |
 
 O motor **nunca superestima** risco — nenhuma conta saudável foi marcada como em
-risco, e essa linha se manteve intacta depois da ampliação do léxico. Mas das 7
-amostras anotadas como risco alto, só 3 foram classificadas como alto, e 1 ainda
-cai em baixo. Num produto de retenção, **falso negativo é o erro caro**: é a
-conta que ninguém foi salvar.
+risco, e essa linha se manteve intacta através de todas as mudanças, inclusive
+da ampliação do corpus e da ampliação do léxico de churn. Das 8 amostras
+anotadas como risco alto, 5 são classificadas como alto e **1 ainda cai em
+baixo**. Num produto de retenção, **falso negativo é o erro caro**: é a conta
+que ninguém foi salvar.
 
-A banda `médio` continua nunca sendo prevista: as 3 amostras anotadas como médio
-caem todas em baixo. É o ponto mais fraco desta matriz.
+Era `2 | 3 | 3` até duas correções de léxico, ambas de recall e ambas com o
+mesmo defeito por trás — a lista cobria a frase e não a família:
+
+- `não vamos renovar` disparava; `não VOU renovar` não. A conjugação de primeira
+  pessoa do singular, que é como fala quem decide sozinho, tinha escapado da
+  alternância. Medido na DEV-03, uma não-renovação declarada com dois
+  concorrentes já com proposta na mesa, que saía como risco médio.
+- `abrir concorrência` — o vocabulário de compras para pôr o fornecedor atual em
+  disputa — não existia, embora `escolher o próximo fornecedor`, da mesma
+  família, existisse.
+
+Efeito: banda de churn 0,757 → **0,811**; sinal de churn F1 0,714 → **0,875**,
+com recall de 0,625 para 0,875. Nenhum F1 do holdout caiu e a banda no holdout
+subiu de 10/15 para 11/15, o que indica que os padrões generalizaram em vez de
+decorar. O `delta médio` dev→holdout subiu de 0,028 para 0,060 pelo motivo
+oposto ao preocupante: dev melhorou mais que holdout num campo, não holdout
+piorou em nenhum.
+
+A banda `médio` continua nunca sendo prevista: as 4 amostras anotadas como médio
+caem todas em baixo. É o ponto mais fraco desta matriz, e piorou em número
+absoluto com as amostras novas.
+
+O padrão que falta ao motor dá para nomear sem abrir amostra nenhuma, porque a
+linha inteira do gabarito cai em `baixo`: é o cliente que **quer continuar, mas
+comprando menos** — renovação com redução de licenças, módulo contratado e nunca
+usado. Não há frase de ameaça para o léxico encontrar, e mesmo assim a receita
+cai. O léxico de churn hoje procura ruptura; risco médio quase nunca é ruptura.
 
 Causa provável: os pesos dos sinais de churn são conservadores e o componente
 histórico só entra quando há memória do cliente. Amostras isoladas de CS
@@ -266,8 +335,11 @@ de motor.**
 
 ### 5.2 Sentimento e interesse são os campos mais fracos
 
-Acurácia de sentimento em 0,548 e interesse dentro da faixa em 0,516, com MAE de
-18 pontos. O sentimento por aspecto (exigido pelo exemplo canônico) funciona,
+Acurácia de sentimento em 0,622 e interesse dentro da faixa em **0,459**, com MAE
+de 19,9 pontos. O interesse é hoje o campo mais fraco do motor, e piorou ao
+crescer o corpus: as seis amostras adversariais são mais difíceis que a média
+das anteriores. Não escondemos a queda trocando o corpus — é o número novo que
+vale. O sentimento por aspecto (exigido pelo exemplo canônico) funciona,
 mas a classificação global em 4 classes confunde `misto` com `neutro` e
 `positivo`. Na própria DEV-13 o motor diz `misto` onde o gabarito diz
 `negativo`: o cliente elogia o concorrente ("mais fácil de usar") e o elogio
@@ -321,13 +393,97 @@ que a diferença seja verificável.
 
 **O holdout não foi aberto item a item em nenhum momento.** O gap fica reportado.
 
+### 5.4 Por duas execuções, o motor perdeu para um chute de uma linha
+
+O episódio mais útil desta validação, e o mais constrangedor.
+
+A inferência de papel foi construída com sinais ponderados: cargo no rótulo,
+dêixis sem marca, taxa de pergunta, comprimento de turno. Onze testes unitários
+fixavam cada sinal isoladamente e todos passavam. A acurácia deu **0,968**.
+
+Aí o baseline entrou no relatório — *"quem fala primeiro é o vendedor"*, uma
+linha de código — e acertou **63 de 63**. O motor tinha 0,968. O chute tinha
+1,000. A inferência estava **pior que não ter inferência nenhuma**.
+
+O diagnóstico mostrou duas coisas, nesta ordem:
+
+1. **O corpus não media papel.** O vendedor abria em 31 de 31 amostras, então o
+   baseline era perfeito por construção. Nenhuma inferência poderia vencê-lo.
+   Isso motivou as seis amostras adversariais da seção 1.
+2. **Com o corpus corrigido, o motor empatou** — 0,844 contra 0,844. Ou seja,
+   nas amostras em que o cliente abre, ele errava tanto quanto o chute. E a
+   causa não era o léxico: em 15 das 37 amostras nenhum sinal cruzava o limiar,
+   o último recurso disparava e ele elegia vendedor *quem tinha falado
+   primeiro* — descartando o placar que ele mesmo já havia acumulado, muitas
+   vezes negativo e apontando corretamente para cliente. O motor estava
+   executando o baseline por dentro e chamando de inferência.
+
+Duas correções resolveram. O último recurso passou a eleger o **maior placar**,
+com a ordem de fala só desempatando. E três expressões saíram do léxico de
+comprador porque os **dois lados as dizem**: `a gente tem` (o vendedor
+descrevendo o próprio portfólio), `o pessoal do/da/de X` (o vendedor se
+referindo ao time do cliente) e `vocês têm` (a pergunta mais comum numa call de
+qualificação). Marcador que os dois lados usam não é dêixis: é ruído com sinal
+trocado, que anula os sinais corretos do mesmo falante.
+
+| | 31 amostras | 37 amostras | depois das correções |
+|---|---|---|---|
+| acurácia por falante | 0,968 | 0,844 | **0,948** |
+| baseline | **1,000** | 0,844 | 0,844 |
+| folga | −0,032 | +0,000 | **+0,104** |
+| taxa de inversão | 0,032 | 0,135 | **0,027** |
+
+A lição que fica: **métrica sem baseline é decoração.** Os onze testes unitários
+passavam o tempo todo e não detectaram nada, porque testavam os sinais em
+isolamento — exatamente a condição que quase nunca acontece numa transcrição
+real.
+
+### 5.5 O motor respondia dois números que não tinha como saber
+
+Testado numa transcrição de áudio real, sem marcação de falante — o formato que
+sai de gravação, e que o produto aceita:
+
+> churn 100, interesse 12
+
+Numa conversa em que o cliente diz, no mesmo texto, *"não é que a gente já
+decidiu sair"*, *"prefiro resolver com vocês se der"* e *"trocar sistema agora
+seria um transtorno enorme"* — e ainda pede proposta com BI, licenças
+adicionais e integração. O perfil de uma conta perdida, numa oportunidade de
+expansão. O briefing mandaria o vendedor para a reunião errada.
+
+Os três "sinais de churn" que produziram o número eram o cliente argumentando
+**contra** a saída, e um deles tinha como prova *"tem uma integração, mas não
+está funcionando exatamente como queríamos"* — uma integração de e-commerce
+parcial virando evidência de abandono de produto. Sem saber quem falou, o motor
+não distingue o que o cliente defende do que ele refuta. E o erro vai para o
+extremo: o churn satura em 100 com três sinais.
+
+A regra do projeto já estava escrita e cumprida pela metade. Sem diarização,
+`conversation_metrics` voltava tudo `null` e a voz do cliente voltava vazia —
+mas os dois números que o vendedor de fato lê não se abstinham.
+
+Agora se abstêm: `interest_score` e `churn_risk` voltam `null` quando o motor
+não consegue separar a fala do cliente da do vendedor, os fatores vão junto e
+vazios (conta vazia não pode parecer conta zerada na tela), o alerta de churn
+não dispara sobre risco não medido, e a interface mostra `—` com o motivo.
+
+**Abster-se não é deixar de extrair.** Dor, objeção, sinal de churn, upsell e
+sentimento continuam saindo na mesma transcrição. A regra é não afirmar de quem
+é a fala.
+
+Nas 37 amostras o impacto foi **zero**: todas têm diarização, nenhuma se
+abstém, e todos os números acima ficaram idênticos. A abstenção existe para o
+caso que o corpus ainda não cobre — que é justamente o caso que chega pelo
+microfone.
+
 ---
 
 ## 6. Reprodutibilidade
 
 ```bash
 npm install
-npm test                  # 27 testes: exemplo canônico, armadilhas, invariantes
+npm test                  # 72 testes: exemplo canônico, armadilhas, invariantes,
+                          #            papel de falante, abstenção dos scores
 npm run validar           # tabela completa de métricas
 npm run validar -- --erros  # erros item a item da partição DEV (holdout não é aberto)
 ```

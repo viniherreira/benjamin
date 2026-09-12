@@ -96,9 +96,27 @@ describe('Invariante de evidência', () => {
     assert.ok(!prep.textoSeguro.includes('teste@dominio.com.br'), 'o e-mail não pode sobreviver');
   });
 
-  test('a soma dos fatores é exatamente o interest score', () => {
+  /*
+   * A invariante ganhou um segundo braço quando os scores passaram a poder se
+   * abster. Sem ele, "conta vazia" e "conta que soma zero" ficariam
+   * indistinguíveis na tela — que é justamente o que a abstenção existe para
+   * evitar.
+   */
+  test('ou a soma dos fatores é o interest score, ou não há score nem fator', () => {
     for (const amostra of AMOSTRAS) {
       const r = analisar({ texto: amostra.texto, dataReuniao: '2026-08-14' });
+
+      if (r.interest_score === null) {
+        assert.deepEqual(
+          r.score_factors,
+          [],
+          `${amostra.nome}: score abstido não pode vir acompanhado de fatores`,
+        );
+        assert.deepEqual(r.churn_factors, []);
+        assert.equal(r.churn_risk, null, `${amostra.nome}: os dois scores se abstêm juntos`);
+        continue;
+      }
+
       const soma = r.score_factors.reduce((s, f) => s + f.delta, 0);
       assert.equal(
         soma,

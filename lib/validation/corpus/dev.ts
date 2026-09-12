@@ -27,6 +27,7 @@ Marcos: Pode, tranquilo.`,
     // Anotação corrigida: "sistema que ninguém mantém" é risco de legado, não
     // dor de integração. Erro meu na primeira passada de anotação.
     gold: gold({
+      papeis: { ana: 'vendedor', marcos: 'cliente' },
       dores: [],
       poder_decisao: 'desconhecido',
       sentimento: 'neutro',
@@ -53,6 +54,7 @@ Roberto: Olha, eu quero acreditar. Mas o meu diretor já pediu pra eu cotar com 
 Carla: Entendo. Me dá até amanhã.
 Roberto: Até amanhã, então.`,
     gold: gold({
+      papeis: { carla: 'vendedor', roberto: 'cliente' },
       concorrentes: [{ nome: 'Sankhya', ativo: true }],
       dores: ['suporte', 'fiscal'],
       churn_claro: true,
@@ -82,6 +84,7 @@ Patrícia: Se vier rápido, eu olho. Mas não me venha com "vamos avaliar", tá?
 Carla: Semana que vem, quarta, com os dois documentos.
 Patrícia: Anotado.`,
     gold: gold({
+      papeis: { carla: 'vendedor', 'patrícia': 'cliente' },
       concorrentes: [
         { nome: 'Sankhya', ativo: true },
         { nome: 'Omie', ativo: true },
@@ -118,6 +121,7 @@ Ana: Agendo.`,
     // Anotação corrigida: demora para abrir loja é dor de implantação/processo,
     // não de integração entre sistemas.
     gold: gold({
+      papeis: { ana: 'vendedor', fernanda: 'cliente' },
       objecoes: [],
       dores: [],
       unidades_oportunidade: ['gestao'],
@@ -149,6 +153,7 @@ Antônio: Rapaz. Isso aí me interessa muito mais que qualquer coisa de estoque.
 Ana: Posso te trazer uma simulação com os seus números reais na próxima semana?
 Antônio: Traz. E traz a taxa, viu, porque é ela que vai decidir.`,
     gold: gold({
+      papeis: { ana: 'vendedor', 'antônio': 'cliente' },
       produtos: [
         { nome: 'TOTVS Protheus', status: 'em_uso' },
         { nome: 'TOTVS Antecipa', status: 'oportunidade' },
@@ -182,6 +187,7 @@ Ana: Depende do número de usuários e do volume de contatos. Pra oito vendedore
 Juliana: Manda. E se der, marca uma demo com o meu gerente comercial junto.
 Ana: Marco pra semana que vem.`,
     gold: gold({
+      papeis: { ana: 'vendedor', juliana: 'cliente' },
       produtos: [
         { nome: 'TOTVS Protheus', status: 'em_uso' },
         { nome: 'RD Station', status: 'oportunidade' },
@@ -214,6 +220,7 @@ Ricardo: Deixa eu ver aqui como é que tá a agenda deles e te aviso.
 Ana: Posso te procurar na semana que vem?
 Ricardo: Pode. Vou ver e te aviso.`,
     gold: gold({
+      papeis: { ana: 'vendedor', ricardo: 'cliente' },
       dores: [],
       sentimento: 'neutro',
       poder_decisao: 'desconhecido',
@@ -241,6 +248,7 @@ Bruno: Perfeito, obrigado.
 Carla: Marcamos a próxima revisão pra outubro?
 Bruno: Marca sim.`,
     gold: gold({
+      papeis: { carla: 'vendedor', bruno: 'cliente' },
       dores: [],
       sentimento: 'positivo',
       poder_decisao: 'desconhecido',
@@ -267,6 +275,7 @@ Sérgio: É assim que eu gosto.
 Ana: Te retorno até quarta com as datas.
 Sérgio: Fico no aguardo.`,
     gold: gold({
+      papeis: { ana: 'vendedor', 'sérgio': 'cliente' },
       concorrentes: [{ nome: 'SAP', ativo: false }],
       objecoes: ['prazo'],
       dores: [],
@@ -296,6 +305,7 @@ Débora: Precisa. Me manda os nomes completos até dia dez que eu cadastro na po
 Ana: Mando amanhã.
 Débora: Então tá certo. Até dia doze.`,
     gold: gold({
+      papeis: { ana: 'vendedor', 'débora': 'cliente' },
       dores: [],
       sentimento: 'neutro',
       poder_decisao: 'desconhecido',
@@ -322,6 +332,7 @@ Paulo: Aí sim. Manda uma proposta com esse escopo em fases que eu levo pro sóc
 Ana: Mando até segunda.
 Paulo: E coloca o valor separado por fase, por favor.`,
     gold: gold({
+      papeis: { ana: 'vendedor', paulo: 'cliente' },
       produtos: [{ nome: 'TOTVS Protheus', status: 'em_uso' }],
       objecoes: ['prazo'],
       dores: ['fiscal'],
@@ -346,6 +357,7 @@ Henrique: Tá. Vou precisar pensar.
 Ana: Claro. Alguma dúvida específica?
 Henrique: Não, por enquanto não.`,
     gold: gold({
+      papeis: { ana: 'vendedor', henrique: 'cliente' },
       dores: [],
       sentimento: 'neutro',
       poder_decisao: 'desconhecido',
@@ -564,6 +576,7 @@ Eu também vejo dessa forma.`,
      * então concorrência anônima vale zero mesmo sendo decisiva.
      */
     gold: gold({
+      papeis: { fernanda: 'vendedor', ricardo: 'cliente', juliana: 'cliente' },
       produtos: [{ nome: 'TOTVS Protheus', status: 'em_uso' }],
       objecoes: ['preco', 'concorrencia', 'tecnica'],
       dores: ['custo', 'processo_manual', 'suporte', 'usabilidade'],
@@ -574,6 +587,140 @@ Eu também vejo dessa forma.`,
       interesse: [0, 20],
       churn_risco: 'alto',
       talk_ratio_vendedor: [0.35, 0.6],
+    }),
+  },
+
+  /*
+   * ADVERSARIAIS — o cliente abre a reunião.
+   *
+   * Nas 31 amostras originais o vendedor abre em 100% das vezes, e por isso o
+   * baseline "quem fala primeiro é o vendedor" acertava 63 de 63 e a métrica de
+   * papel não media nada. Estas amostras existem para quebrar essa regularidade:
+   * são situações comuns em campo (inbound, escalada, cotação conduzida pelo
+   * comprador, QBR que o cliente puxa) e em nenhuma delas quem abre está
+   * vendendo.
+   */
+
+  {
+    codigo: 'DEV-14',
+    cenario: 'cliente_abre_a_call',
+    particao: 'dev',
+    cliente: 'Vidraçaria Panorama',
+    texto: `Simone: Ana, fui eu que pedi essa conversa, então deixa eu já começar contando o porquê.
+Ana: Claro, Simone. Fico à vontade de te ouvir primeiro.
+Simone: A gente cresceu rápido demais no último ano e o controle de pedido travou. O vendedor anota no WhatsApp, alguém digita numa planilha, e a produção só descobre o pedido dois dias depois.
+Ana: E isso já virou problema concreto?
+Simone: Já perdemos entrega. Duas no mês passado. E o pior é que eu não sei dizer quantas de verdade, porque não fica registro de nada.
+Ana: Quantas pessoas mexem nesse fluxo hoje?
+Simone: Umas seis. E cada uma com a sua planilha, que é o que me tira o sono.
+Ana: Vocês estão olhando alguma coisa no mercado?
+Simone: Estamos conversando com o Bling em paralelo, sim.
+Ana: Entendi. Posso te mostrar como a gente fecha o pedido ponta a ponta?
+Simone: Pode. Mas já adianto: precisa ser rápido de implantar, senão não serve pra gente.
+Ana: Quanto tempo você considera rápido?
+Simone: Sessenta dias. Mais que isso eu perco a janela antes da alta temporada.
+Ana: Anotado. Te mando uma agenda de demonstração até quinta.
+Simone: Manda. E essa decisão é minha, não preciso levar pra ninguém.`,
+    gold: gold({
+      papeis: { simone: 'cliente', ana: 'vendedor' },
+      concorrentes: [{ nome: 'Bling', ativo: true }],
+      dores: ['processo_manual'],
+      objecoes: ['prazo'],
+      unidades_oportunidade: ['gestao'],
+      sentimento: 'misto',
+      poder_decisao: 'decisor',
+      interesse: [62, 85],
+      churn_risco: 'baixo',
+    }),
+  },
+
+  {
+    codigo: 'DEV-15',
+    cenario: 'cotacao_conduzida_pelo_cliente',
+    particao: 'dev',
+    cliente: 'Embalagens Trindade',
+    // O comprador faz TODAS as perguntas. "Quem pergunta conduz" aponta para o
+    // lado errado aqui — é o sinal estrutural falhando de propósito.
+    texto: `Gilberto: Bom dia. Eu vou puxar a conversa porque tenho uma lista de perguntas aqui, tudo bem?
+Ana: Bom dia, Gilberto. Pode ir.
+Gilberto: Vocês cobram por usuário nomeado ou por acesso simultâneo?
+Ana: Por usuário nomeado.
+Gilberto: Tem mínimo de contratação?
+Ana: Tem. Dez usuários.
+Gilberto: A implantação é cobrada à parte?
+Ana: É. Varia conforme o número de módulos.
+Gilberto: Vocês fazem migração do histórico do sistema antigo?
+Ana: Fazemos, com escopo fechado antes de começar.
+Gilberto: E se eu quiser sair no meio do contrato, qual a multa?
+Ana: Está na cláusula de rescisão. Te mando o contrato modelo junto.
+Gilberto: Manda. Eu estou cotando com três fornecedores e preciso comparar maçã com maçã.
+Ana: Perfeito. Proposta e contrato modelo até amanhã.
+Gilberto: Até amanhã. Eu levo pro comitê na sexta.`,
+    gold: gold({
+      papeis: { gilberto: 'cliente', ana: 'vendedor' },
+      objecoes: ['concorrencia'],
+      sentimento: 'neutro',
+      poder_decisao: 'influenciador',
+      interesse: [45, 70],
+      churn_risco: 'baixo',
+    }),
+  },
+
+  {
+    codigo: 'DEV-16',
+    cenario: 'escalada_do_cliente',
+    particao: 'dev',
+    cliente: 'Laticínios Boa Vista',
+    texto: `Otávio: Carla, fui eu que marquei essa call e vou direto ao ponto.
+Carla: Pode ir, Otávio.
+Otávio: O faturamento parou na quinta-feira. Parou. A gente ficou dois dias sem emitir nota e eu tive caminhão carregado na doca esperando.
+Carla: Eu vi o chamado. Foi escalado ontem à noite.
+Otávio: Ontem à noite é tarde demais. Esse é o terceiro incidente no semestre e sempre a mesma história: abre chamado, espera, alguém liga depois que o estrago já aconteceu.
+Carla: Você tem razão na cronologia. Não vou discutir isso.
+Otávio: Não é só cronologia, Carla. É que eu não consigo mais sustentar isso internamente. Meu conselho pergunta toda reunião por que a gente continua com esse sistema.
+Carla: O que precisa acontecer pra você conseguir sustentar?
+Otávio: Um plano de estabilização com prazo, e alguém com nome e telefone que atenda quando parar. Não uma fila.
+Carla: Consigo te trazer isso até sexta, com o gerente de operação junto.
+Otávio: Traz. Porque a alternativa que estão me empurrando lá dentro é abrir concorrência com a Senior.
+Carla: Entendo. Sexta, com plano e com nome.
+Otávio: Combinado.`,
+    gold: gold({
+      papeis: { otávio: 'cliente', carla: 'vendedor' },
+      concorrentes: [{ nome: 'Senior Sistemas', ativo: true }],
+      dores: ['suporte'],
+      churn_claro: true,
+      sentimento: 'negativo',
+      poder_decisao: 'influenciador',
+      interesse: [5, 35],
+      churn_risco: 'alto',
+    }),
+  },
+
+  {
+    codigo: 'DEV-17',
+    cenario: 'qbr_aberta_pelo_cliente',
+    particao: 'dev',
+    cliente: 'Gráfica Meridiano',
+    texto: `Letícia: Carla, obrigada por encaixar. Eu queria aproveitar a revisão pra já pedir umas coisas.
+Carla: Imagina, Letícia. Pode pedir.
+Letícia: Primeiro o balanço: esse trimestre rodou liso. Sem chamado crítico, e o pessoal parou de reclamar do fechamento.
+Carla: Que bom ouvir isso.
+Letícia: Segundo, a gente vai abrir uma unidade em Contagem no primeiro trimestre e eu preciso entender como replicar a configuração pra lá.
+Carla: Isso a gente trata como expansão, com o mesmo template que você já usa aqui.
+Letícia: E terceiro: eu queria olhar o módulo de folha. Hoje a folha é feita fora, com uma empresa terceirizada, e tá ficando caro.
+Carla: Posso te trazer um comparativo de custo do RH na próxima?
+Letícia: Traz. Se o número fechar, eu aprovo aqui mesmo.
+Carla: Fechado. Trago o comparativo e o plano da unidade nova.
+Letícia: Ótimo. Obrigada, Carla.`,
+    gold: gold({
+      papeis: { letícia: 'cliente', carla: 'vendedor' },
+      dores: ['rh'],
+      upsell_claro: true,
+      unidades_oportunidade: ['gestao'],
+      sentimento: 'positivo',
+      poder_decisao: 'decisor',
+      interesse: [70, 92],
+      churn_risco: 'baixo',
     }),
   },
 ];

@@ -90,6 +90,25 @@ export function avaliarQualidade(prep: Preparado): QualidadeTranscricao {
     }
   }
 
+  /*
+   * O corte dos dois scores.
+   *
+   * `podeFiltrarCliente` já é exatamente a pergunta certa: consigo dizer quais
+   * sentenças são do cliente? Se não consigo, interesse e churn deixam de ser
+   * estimativa e viram invenção — e invenção no extremo da escala, porque o
+   * churn satura em 100 com três sinais e o interesse despenca com os mesmos
+   * três. O desconto de índice é pequeno porque os avisos acima já cobraram
+   * pela causa (falta de diarização ou fragmentação); aqui só se registra a
+   * consequência.
+   */
+  const scores_atribuiveis = prep.podeFiltrarCliente;
+  if (!scores_atribuiveis) {
+    warnings.push(
+      'Interesse e risco de churn não calculados: sem separar a fala do cliente da fala ' +
+        'do vendedor, os sinais de risco não podem ser atribuídos a ninguém.',
+    );
+  }
+
   return {
     word_count,
     turn_count: prep.turnos.length,
@@ -101,6 +120,7 @@ export function avaliarQualidade(prep: Preparado): QualidadeTranscricao {
     lexical_diversity: Number(lexical_diversity.toFixed(3)),
     redacted_entities: prep.redacoes.length,
     reliability_index: Math.round(limitar(indice, 0, 100)),
+    scores_atribuiveis,
     warnings,
   };
 }

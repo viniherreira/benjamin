@@ -14,7 +14,7 @@ import {
   TrendingUp,
   TriangleAlert,
 } from 'lucide-react';
-import { Badge, BotaoLink, Card, Mono, PageHeader, type Tom } from '@/components/ui';
+import { Badge, BotaoLink, Card, Mono, PageHeader, Painel, type Tom } from '@/components/ui';
 import {
   ListaFatores,
   Medidor,
@@ -109,9 +109,18 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
         }
       />
 
-      {/* Health + séries */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(260px,320px)_1fr]">
-        <Card titulo="Health score" legenda="Composição sobre todo o histórico da conta">
+      {/*
+        Estado da conta — UMA superfície de vidro, não cinco.
+
+        Health, interesse, confiança, valor e persona são leituras do mesmo
+        objeto: a conta. Cada uma num cartão de vidro próprio dava cinco
+        retângulos idênticos disputando a mesma atenção. Agora o vidro é o
+        painel e o que separa uma leitura da outra é espaço — com hairline
+        vertical onde há largura para ele.
+      */}
+      <section className="vidro rounded-xl p-5">
+        <div className="grid gap-x-8 gap-y-7 lg:grid-cols-[minmax(230px,290px)_1fr] lg:[&>*+*]:border-l lg:[&>*+*]:border-line lg:[&>*+*]:pl-8">
+          <Card plano titulo="Health score" legenda="Composição sobre todo o histórico da conta">
           <Medidor valor={v.health.score} tom={tomHealth(v.health.band)} />
           <p className="mt-1 text-[11px] text-ink-faint">
             banda <span className="font-mono">{v.health.band}</span>
@@ -122,8 +131,8 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
           </div>
         </Card>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card titulo="Interesse ao longo das reuniões" legenda="Uma leitura por reunião analisada">
+          <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
+          <Card plano titulo="Interesse ao longo das reuniões" legenda="Uma leitura por reunião analisada">
             {ultimoInteresse != null ? (
               <>
                 <div className="flex items-baseline gap-2">
@@ -143,7 +152,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             )}
           </Card>
 
-          <Card titulo="Confiança no vendedor" legenda="Rapport medido por sinais na conversa">
+          <Card plano titulo="Confiança no vendedor" legenda="Rapport medido por sinais na conversa">
             {ultimaConfianca != null ? (
               <>
                 <div className="flex items-baseline gap-2">
@@ -163,7 +172,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             )}
           </Card>
 
-          <Card titulo="Valor de negócio" legenda="Estimativa a partir de parâmetros da conta">
+          <Card plano titulo="Valor de negócio" legenda="Estimativa a partir de parâmetros da conta">
             <dl className="space-y-2 text-[12px]">
               <div className="flex items-center justify-between gap-3">
                 <dt className="text-ink-dim">Valor de contrato</dt>
@@ -194,7 +203,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             </p>
           </Card>
 
-          <Card titulo="Persona no ciclo" legenda="Maior poder de decisão identificado">
+          <Card plano titulo="Persona no ciclo" legenda="Maior poder de decisão identificado">
             {v.personaTopo ? (
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
@@ -214,12 +223,18 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
               <p className="text-[12px] text-ink-faint">Persona ainda não identificada.</p>
             )}
           </Card>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Objeções recorrentes — o achado que nenhuma reunião isolada revela */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      {/*
+        O resto da ficha, agrupado por assunto. Eram sete cartões de vidro
+        empilhados abaixo da dobra; agora são três painéis, e o que separa um
+        assunto do outro dentro deles é um hairline.
+      */}
+      <Painel className="mt-4">
         <Card
+          plano
           titulo="Objeções recorrentes"
           legenda="Contadas por categoria ao longo de todas as reuniões"
           acoes={<Repeat size={14} className="text-ink-faint" />}
@@ -265,6 +280,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
         </Card>
 
         <Card
+          plano
           titulo="Necessidades em aberto"
           legenda="Com contador de menções ao longo do relacionamento"
           acoes={<Target size={14} className="text-ink-faint" />}
@@ -287,11 +303,12 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             </ul>
           )}
         </Card>
-      </div>
+      </Painel>
 
       {/* Stack e concorrentes */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <Painel className="mt-4">
         <Card
+          plano
           titulo="Stack TOTVS"
           legenda="O que está em uso e o que é oportunidade, por unidade de negócio"
           acoes={<Layers size={14} className="text-ink-faint" />}
@@ -320,6 +337,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
         </Card>
 
         <Card
+          plano
           titulo="Concorrentes no ciclo"
           legenda="Menções acumuladas e se a ameaça está ativa"
           acoes={<Swords size={14} className="text-ink-faint" />}
@@ -343,11 +361,12 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             </ul>
           )}
         </Card>
-      </div>
+      </Painel>
 
       {/* Tarefas */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <Painel className="mt-4">
         <Card
+          plano
           titulo="Compromissos em aberto"
           legenda="Dos dois lados, com atraso destacado"
           acoes={<AlarmClock size={14} className="text-ink-faint" />}
@@ -391,6 +410,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
         </Card>
 
         <Card
+          plano
           titulo="Decisões registradas"
           legenda="O que ficou combinado ao longo do ciclo"
           acoes={<Gavel size={14} className="text-ink-faint" />}
@@ -408,11 +428,12 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             </ul>
           )}
         </Card>
-      </div>
+      </Painel>
 
       {/* Linha do tempo */}
-      <div className="mt-4">
+      <Painel className="mt-4">
         <Card
+          plano
           titulo="Linha do tempo"
           legenda="Cada reunião com seus indicadores — clique para abrir o briefing"
           acoes={<MessagesSquare size={14} className="text-ink-faint" />}
@@ -456,7 +477,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             </ol>
           )}
         </Card>
-      </div>
+      </Painel>
 
       {v.tarefasConcluidas > 0 ? (
         <p className="mt-3 flex items-center gap-1.5 text-[11px] text-ink-faint">

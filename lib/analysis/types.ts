@@ -224,7 +224,34 @@ export type QualidadeTranscricao = {
   lexical_diversity: number;
   redacted_entities: number;
   reliability_index: number;
+  /**
+   * Dá para atribuir cada fala a um lado da mesa?
+   *
+   * Quando é false, interesse e risco de churn voltam null. Não é preciosismo:
+   * numa gravação sem diarização, "trocar de sistema" aparece tanto quando o
+   * cliente ameaça sair quanto quando ele explica que NÃO quer sair, e somar
+   * esses sinais satura o churn em 100 numa conta que quer ficar.
+   */
+  scores_atribuiveis: boolean;
   warnings: string[];
+};
+
+/**
+ * Quem falou, de que lado, e por quê.
+ *
+ * `confidence` baixo não é defeito: é o motor dizendo que decidiu sem base
+ * firme e que a interface deveria pedir confirmação. `signals` é o que a faixa
+ * de confirmação mostra quando o vendedor pergunta "por que você achou isso?",
+ * e o que a métrica usa para separar decisão fundamentada de palpite por ordem
+ * de fala.
+ */
+export type FalanteInferido = {
+  name: string;
+  side: Lado;
+  confidence: number;
+  signals: string[];
+  words: number;
+  turns: number;
 };
 
 export type ValorDeNegocio = {
@@ -272,6 +299,8 @@ export type AnalysisResult = {
 
   // Qualidade do dado (provocação B)
   conversation_metrics: MetricasConversa;
+  /** Quem é vendedor e quem é cliente, com a confiança e os sinais da decisão. */
+  speakers: FalanteInferido[];
   transcript_quality: QualidadeTranscricao;
   bant: Bant;
 
@@ -279,8 +308,14 @@ export type AnalysisResult = {
   // Invariante: a soma dos deltas de `score_factors` é EXATAMENTE
   // `interest_score`. Por isso os fatores de churn moram em campo próprio —
   // misturar os dois quebraria a conta que a UI mostra ao vendedor.
-  interest_score: number;
-  churn_risk: number;
+  /**
+   * null quando `transcript_quality.scores_atribuiveis` é false: o motor não
+   * consegue dizer quem falou o quê e prefere não responder a responder
+   * errado. Nesse caso `score_factors` e `churn_factors` vêm vazios — conta
+   * vazia não pode parecer conta zerada.
+   */
+  interest_score: number | null;
+  churn_risk: number | null;
   score_factors: FatorScore[];
   churn_factors: FatorScore[];
 
@@ -316,6 +351,22 @@ export type EntradaAnalise = {
   /** Âncora para resolver prazos relativos ("até sexta"). ISO yyyy-mm-dd. */
   dataReuniao?: string;
   memoria?: MemoriaCliente;
+  /**
+   * Quem está vendendo. Default 'TOTVS'.
+   *
+   * O sinal "aqui na <empresa>" vale muito e estava cravado no léxico como
+   * TOTVS. Como parâmetro ele continua valendo sem prender o motor a um
+   * cliente só.
+   */
+  empresaVendedora?: string;
+  /**
+   * Papéis confirmados por um humano. Chave em minúsculo, vence o motor.
+   *
+   * Isto não é campo de auditoria: talk ratio, voz do cliente e o filtro de
+   * sentimento dependem do papel. Se o humano corrige e o briefing não muda,
+   * a correção é teatro.
+   */
+  papeisFixados?: Record<string, Lado>;
 };
 
 /* ------------------------------------------------------------------ *

@@ -90,7 +90,7 @@ completo, usando o mesmo texto que a validação mede. É idempotente.
 ## Validando
 
 ```bash
-npm test                     # 27 testes
+npm test                     # 70 testes
 npm run validar              # tabela completa de métricas
 npm run validar -- --erros   # erros da partição DEV (o holdout não é aberto)
 ```

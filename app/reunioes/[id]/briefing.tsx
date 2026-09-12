@@ -7,7 +7,6 @@ import {
   BadgeDollarSign,
   Building2,
   CheckCircle2,
-  ChevronRight,
   CircleDollarSign,
   Gauge,
   Lock,
@@ -23,6 +22,7 @@ import type { AnalysisResult, BusinessUnit, Evidence } from '@/lib/analysis';
 import { Badge, Mono, type Tom } from '@/components/ui';
 import { ControleCorrecao } from './correcao';
 import { PainelEnriquecimento } from './enriquecer';
+import { Abas } from '@/components/abas';
 
 /* ------------------------------------------------------------------ *
  * Formatação
@@ -47,6 +47,13 @@ const STATUS_PRODUTO: Record<'em_uso' | 'avaliando' | 'mencionado' | 'oportunida
 };
 
 const SEVERIDADE: Record<'alta' | 'media' | 'baixa', Tom> = { alta: 'risk', media: 'warn', baixa: 'neutro' };
+
+/** `media` é chave de dado; a tela escreve "média". */
+const AMEACA: Record<'alta' | 'media' | 'baixa', string> = {
+  alta: 'alta',
+  media: 'média',
+  baixa: 'baixa',
+};
 const SENTIMENTO: Record<'positivo' | 'neutro' | 'negativo' | 'misto', { rotulo: string; tom: Tom }> = {
   positivo: { rotulo: 'Positivo', tom: 'health' },
   neutro: { rotulo: 'Neutro', tom: 'neutro' },
@@ -97,44 +104,122 @@ export function Briefing({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_minmax(340px,42%)]">
-      {/* Coluna do briefing */}
+      {/*
+        Coluna do briefing.
+
+        Três superfícies de vidro, não dezessete: a capa com o que o vendedor
+        precisa antes de entrar na call, o que fazer depois dela, e o resto
+        atrás de abas. Nada saiu do produto — toda extração continua a um
+        clique, com a citação que a originou.
+      */}
       <div className="min-w-0 space-y-4">
-        <Resumo analise={analise} />
+        <Capa analise={analise} onSelect={selecionar} />
+
+        <Acoes analise={analise} sel={sel} onSelect={selecionar} />
+
+        <Abas
+          abas={[
+            {
+              id: 'conta',
+              rotulo: 'Conta',
+              icone: <Building2 size={13} />,
+              conteudo: (
+                <Grupo>
+                  <Ecossistema analise={analise} sel={sel} onSelect={selecionar} />
+                  <Oportunidades analise={analise} sel={sel} onSelect={selecionar} />
+                  <Concorrentes analise={analise} sel={sel} onSelect={selecionar} />
+                  <ValorNegocio analise={analise} />
+                </Grupo>
+              ),
+            },
+            {
+              id: 'conversa',
+              rotulo: 'Conversa',
+              icone: <MessagesSquare size={13} />,
+              conteudo: (
+                <Grupo>
+                  <Sentimento analise={analise} sel={sel} onSelect={selecionar} />
+                  <Persona analise={analise} onSelect={selecionar} />
+                  <Voz analise={analise} sel={sel} onSelect={selecionar} />
+                  <Confianca analise={analise} sel={sel} onSelect={selecionar} />
+                  <Conversa analise={analise} />
+                </Grupo>
+              ),
+            },
+            {
+              id: 'extracao',
+              rotulo: 'Extração',
+              icone: <Target size={13} />,
+              conteudo: (
+                <Grupo>
+                  <SemAtribuicao analise={analise} />
+                  <Extracoes analise={analise} sel={sel} onSelect={selecionar} />
+                  <SinaisChurnUpsell analise={analise} sel={sel} onSelect={selecionar} />
+                  <Financeiro analise={analise} sel={sel} onSelect={selecionar} />
+                </Grupo>
+              ),
+            },
+            {
+              id: 'placar',
+              rotulo: 'Como o motor calculou',
+              icone: <Gauge size={13} />,
+              conteudo: (
+                <Grupo>
+                  {/*
+                    Interesse e poder de decisão são os campos mais fracos da
+                    validação. Exibir o número sem dizer isso empresta a eles
+                    uma precisão que a medição não sustenta — e o lugar de dizer
+                    é aqui, junto da conta, não na capa.
+
+                    O link em vez do número: acurácia publicada na tela envelhece
+                    a cada ajuste de léxico, e número velho no produto é o mesmo
+                    defeito que este projeto passou a semana consertando na
+                    documentação.
+                  */}
+                  <p className="text-[11.5px] leading-relaxed text-ink-faint">
+                    Estes dois scores são estimativa calibrada, não medida. A acurácia de cada campo
+                    é medida sobre o corpus versionado e publicada em{' '}
+                    <a href="/validacao" className="text-accent hover:underline">
+                      Validação
+                    </a>{' '}
+                    — o interesse é hoje o campo mais fraco do motor.
+                  </p>
+                  <ScoreCard
+                    titulo="Interesse"
+                    icone={<Gauge size={14} />}
+                    valor={analise.interest_score}
+                    tom={
+                      (analise.interest_score ?? 0) >= 60
+                        ? 'health'
+                        : (analise.interest_score ?? 0) >= 40
+                          ? 'warn'
+                          : 'risk'
+                    }
+                    fatores={analise.score_factors}
+                    onSelect={selecionar}
+                  />
+                  <ScoreCard
+                    titulo="Risco de churn"
+                    icone={<TrendingDown size={14} />}
+                    valor={analise.churn_risk}
+                    tom={
+                      (analise.churn_risk ?? 0) >= 67
+                        ? 'risk'
+                        : (analise.churn_risk ?? 0) >= 34
+                          ? 'warn'
+                          : 'health'
+                    }
+                    fatores={analise.churn_factors}
+                    onSelect={selecionar}
+                  />
+                  <Qualidade analise={analise} />
+                </Grupo>
+              ),
+            },
+          ]}
+        />
 
         <PainelEnriquecimento meetingId={meetingId} onSelecionar={selecionar} />
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <ScoreCard
-            titulo="Interesse"
-            icone={<Gauge size={14} />}
-            valor={analise.interest_score}
-            tom={analise.interest_score >= 60 ? 'health' : analise.interest_score >= 40 ? 'warn' : 'risk'}
-            fatores={analise.score_factors}
-            onSelect={selecionar}
-          />
-          <ScoreCard
-            titulo="Risco de churn"
-            icone={<TrendingDown size={14} />}
-            valor={analise.churn_risk}
-            tom={analise.churn_risk >= 67 ? 'risk' : analise.churn_risk >= 34 ? 'warn' : 'health'}
-            fatores={analise.churn_factors}
-            onSelect={selecionar}
-          />
-        </div>
-
-        <Confianca analise={analise} sel={sel} onSelect={selecionar} />
-        <Sentimento analise={analise} sel={sel} onSelect={selecionar} />
-        <Persona analise={analise} onSelect={selecionar} />
-        <Ecossistema analise={analise} sel={sel} onSelect={selecionar} />
-        <Oportunidades analise={analise} sel={sel} onSelect={selecionar} />
-        <Concorrentes analise={analise} sel={sel} onSelect={selecionar} />
-        <SinaisChurnUpsell analise={analise} sel={sel} onSelect={selecionar} />
-        <Extracoes analise={analise} sel={sel} onSelect={selecionar} />
-        <Tarefas analise={analise} sel={sel} onSelect={selecionar} />
-        <Financeiro analise={analise} sel={sel} onSelect={selecionar} />
-        <Voz analise={analise} sel={sel} onSelect={selecionar} />
-        <Conversa analise={analise} />
-        <ValorNegocio analise={analise} />
       </div>
 
       {/* Coluna da transcrição */}
@@ -223,16 +308,32 @@ function Secao({
   contador?: number;
   children: ReactNode;
 }) {
+  /*
+   * Secao NÃO é vidro.
+   *
+   * Era, e esse foi o erro: com uma seção de vidro por assunto, o briefing
+   * empilhava dezessete arestas, dezessete sombras e dezessete blurs numa
+   * coluna só. Vidro precisa de espaço negativo para parecer material — em
+   * série ele vira textura e some.
+   *
+   * Agora o vidro marca SUPERFÍCIE, não item: quem tem vidro é o painel ou a
+   * aba que agrupa; aqui dentro a separação é feita com espaço e um hairline.
+   * Card dentro de card é sempre erro.
+   */
   return (
-    <section className="vidro rounded-xl">
-      <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
-        {icone ? <span className="text-ink-dim">{icone}</span> : null}
-        <h2 className="text-[13px] font-semibold text-ink">{titulo}</h2>
+    <section>
+      <div className="mb-2.5 flex items-center gap-2">
+        {icone ? <span className="text-ink-faint">{icone}</span> : null}
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-dim">
+          {titulo}
+        </h2>
         {contador != null ? (
-          <span className="ml-auto font-mono text-[11px] text-ink-faint">{contador}</span>
+          <span className="ml-auto font-mono text-[11px] tabular-nums text-ink-faint">
+            {contador}
+          </span>
         ) : null}
       </div>
-      <div className="p-4">{children}</div>
+      {children}
     </section>
   );
 }
@@ -301,10 +402,291 @@ function ItemEv({
   );
 }
 
-function Resumo({ analise }: { analise: AnalysisResult }) {
+/**
+ * Agrupa seções dentro de uma superfície de vidro.
+ *
+ * A separação entre assuntos é feita por espaço e um hairline — nunca por mais
+ * um painel. Quem tem vidro é o container; aqui dentro é ritmo.
+ */
+function Grupo({ children }: { children: ReactNode }) {
+  return <div className="divide-y divide-line [&>*]:py-5 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">{children}</div>;
+}
+
+/**
+ * Um fato da capa: rótulo em micro-caixa-alta e o valor embaixo.
+ *
+ * Vira botão quando existe citação por trás — a promessa do produto é que todo
+ * item leva à frase que o originou, e ela não pode valer só nas abas.
+ */
+function Fato({
+  rotulo,
+  ev,
+  onSelect,
+  children,
+}: {
+  rotulo: string;
+  ev?: Evidence;
+  onSelect?: (e: Evidence | undefined) => void;
+  children: ReactNode;
+}) {
+  const clicavel = Boolean(ev?.quote && onSelect);
+  const corpo = (
+    <>
+      <span className="block text-[10px] font-semibold uppercase tracking-[0.09em] text-ink-faint">
+        {rotulo}
+      </span>
+      <span className="mt-1 block text-[13px] leading-snug text-ink">{children}</span>
+    </>
+  );
+
+  if (!clicavel) return <div className="min-w-0">{corpo}</div>;
+
   return (
-    <Secao titulo="Resumo" icone={<ChevronRight size={14} />}>
-      <p className="text-[13px] leading-relaxed text-ink-dim">{analise.summary || 'Sem resumo.'}</p>
+    <button
+      type="button"
+      onClick={() => onSelect?.(ev)}
+      title="Ver o trecho que originou este item"
+      className="group min-w-0 rounded-md text-left transition-colors hover:text-ink"
+    >
+      <span className="block text-[10px] font-semibold uppercase tracking-[0.09em] text-ink-faint transition-colors group-hover:text-ink-dim">
+        {rotulo}
+      </span>
+      <span className="mt-1 flex items-center gap-1.5 text-[13px] leading-snug text-ink">
+        {children}
+        <Quote size={10} className="shrink-0 text-ink-faint opacity-0 transition-opacity group-hover:opacity-100" />
+      </span>
+    </button>
+  );
+}
+
+/**
+ * A capa.
+ *
+ * Substitui o que eram quatro painéis no topo — resumo, dois scores gigantes e
+ * persona. O resumo é a manchete; abaixo dele vem a faixa de fatos que o
+ * roteiro da demo já apontava como o que importa: produto, concorrente,
+ * budget, persona e sentimento.
+ *
+ * Os dois scores entram como número na faixa, do mesmo tamanho dos demais
+ * fatos. Cartão grande com barra dava a eles um peso que o próprio roteiro não
+ * lhes dá — e agora que podem vir nulos, um "—" ocupando meia tela pareceria
+ * defeito em vez de abstenção. A conta que produziu cada um continua inteira,
+ * na aba "Como o motor calculou".
+ */
+function Capa({
+  analise,
+  onSelect,
+}: {
+  analise: AnalysisResult;
+  onSelect: (e: Evidence | undefined) => void;
+}) {
+  const s = SENTIMENTO[analise.sentiment] ?? SENTIMENTO.neutro;
+  const produto = analise.totvs_products[0];
+  const outros = analise.totvs_products.length - 1;
+  const ameaca = [...analise.competitors].sort((a, b) => Number(b.active) - Number(a.active))[0];
+  const verba = analise.budget[0];
+  const p = analise.persona;
+
+  const num = (v: number | null) =>
+    v === null ? <span className="text-ink-faint">—</span> : <span className="tabular-nums">{v}</span>;
+
+  return (
+    <section className="vidro rounded-xl p-5">
+      <p className="max-w-[68ch] text-[14.5px] leading-relaxed text-ink">
+        {analise.summary || 'Sem resumo para esta reunião.'}
+      </p>
+
+      <div className="mt-5 flex flex-wrap gap-x-7 gap-y-4 border-t border-line pt-4">
+        {/*
+          `tom="accent"` e não o default: Mono neutro é `text-ink-dim`, que numa
+          faixa de fatos primários faz o número sair mais apagado que o rótulo
+          dele. Na paleta monocromática do produto, accent É tinta cheia.
+        */}
+        <Fato rotulo="Interesse">
+          <Mono tom="accent" className="text-[15px]">
+            {num(analise.interest_score)}
+          </Mono>
+        </Fato>
+        <Fato rotulo="Risco de churn">
+          <Mono
+            tom={(analise.churn_risk ?? 0) >= 67 ? 'risk' : (analise.churn_risk ?? 0) >= 34 ? 'warn' : 'accent'}
+            className="text-[15px]"
+          >
+            {num(analise.churn_risk)}
+          </Mono>
+        </Fato>
+
+        <Fato rotulo="Sentimento">
+          <Badge tom={s.tom}>{s.rotulo}</Badge>
+        </Fato>
+
+        <Fato rotulo="Persona" ev={p.evidence} onSelect={onSelect}>
+          {p.name ? `${p.name} · ` : ''}
+          {PODER[p.decision_power] ?? p.decision_power}
+        </Fato>
+
+        {produto ? (
+          <Fato rotulo="Produto" ev={produto.evidence} onSelect={onSelect}>
+            {produto.name}
+            <Badge tom={STATUS_PRODUTO[produto.status]?.tom ?? 'neutro'}>
+              {STATUS_PRODUTO[produto.status]?.rotulo ?? produto.status}
+            </Badge>
+            {outros > 0 ? <span className="text-ink-faint">+{outros}</span> : null}
+          </Fato>
+        ) : null}
+
+        {ameaca ? (
+          <Fato rotulo="Concorrente" ev={ameaca.evidence} onSelect={onSelect}>
+            {ameaca.name}
+            <Badge tom={ameaca.active ? SEVERIDADE[ameaca.threat] ?? 'neutro' : 'neutro'}>
+              {ameaca.active ? `ameaça ${AMEACA[ameaca.threat] ?? ameaca.threat}` : 'histórico'}
+            </Badge>
+          </Fato>
+        ) : null}
+
+        {verba ? (
+          <Fato rotulo="Budget" ev={verba.evidence} onSelect={onSelect}>
+            <Mono className="text-[13px] tabular-nums">{fmtBRL(verba.amount)}</Mono>
+            {verba.confidential ? (
+              <Badge tom="warn">
+                <Lock size={10} />
+                sigiloso
+              </Badge>
+            ) : null}
+          </Fato>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * O que fazer.
+ *
+ * Próximos passos e tarefas estavam em 13º e 18º na rolagem. Para quem abre o
+ * briefing antes da próxima call, é a única coisa acionável da tela — e agora
+ * é a segunda superfície, logo abaixo da capa.
+ */
+function Acoes({
+  analise,
+  sel,
+  onSelect,
+}: {
+  analise: AnalysisResult;
+  sel: Sel;
+  onSelect: (e: Evidence | undefined) => void;
+}) {
+  const nada = analise.next_steps.length === 0 && analise.action_items.length === 0;
+
+  return (
+    <section className="vidro rounded-xl p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <Target size={14} className="text-ink-faint" />
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-dim">
+          O que fazer
+        </h2>
+      </div>
+
+      {nada ? (
+        <Vazio>
+          A reunião terminou sem próximo passo acordado. Isso costuma ser o achado, não a falta
+          dele.
+        </Vazio>
+      ) : (
+        <div className="space-y-4">
+          <GrupoTexto
+            titulo="Próximos passos"
+            itens={analise.next_steps}
+            sel={sel}
+            onSelect={onSelect}
+            render={(n) => (n as (typeof analise.next_steps)[number]).text}
+          />
+          <Tarefas analise={analise} sel={sel} onSelect={onSelect} />
+        </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Ressalva de atribuição.
+ *
+ * Sem separar quem falou, `ehFalaDoCliente` passa a aceitar qualquer sentença —
+ * a regra do projeto é extrair mesmo assim, só não afirmar de quem é a fala.
+ * Só que a tela vinha afirmando: um bloco chamado "Problemas / dores" logo
+ * abaixo do nome do cliente lê como dor DO cliente.
+ *
+ * Medido sobre as 37 amostras, removendo os rótulos: a lista de dores incha
+ * 30%, e o que entra é o vendedor descrevendo o problema numa demonstração.
+ * Não dá para separar depois; dá para avisar.
+ */
+function SemAtribuicao({ analise }: { analise: AnalysisResult }) {
+  if (analise.transcript_quality.scores_atribuiveis) return null;
+  return (
+    <div className="flex gap-2 rounded-md border border-warn/30 bg-warn-soft/30 px-3 py-2.5">
+      <TriangleAlert size={13} className="mt-0.5 shrink-0 text-warn" />
+      <p className="text-[11.5px] leading-relaxed text-ink-dim">
+        Esta transcrição não separa quem falou, então os itens abaixo saem da conversa inteira —{' '}
+        <strong className="font-medium text-ink">não só da fala do cliente</strong>. Uma dor descrita
+        pelo vendedor numa demonstração entra aqui do mesmo jeito. A citação de cada item continua
+        exata; o que falta é de quem ela é.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Qualidade da matéria-prima.
+ *
+ * Antes só existia como um selo numérico ao lado da transcrição. Agora que o
+ * motor se abstém de calcular interesse e churn quando não consegue separar
+ * quem falou, o MOTIVO da abstenção precisa de um lugar — um "—" sem
+ * explicação é pior que um número errado.
+ */
+function Qualidade({ analise }: { analise: AnalysisResult }) {
+  const q = analise.transcript_quality;
+  return (
+    <Secao titulo="Qualidade da transcrição" icone={<ShieldCheck size={14} />}>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
+        <Metrica rotulo="Confiabilidade" valor={<Mono>{q.reliability_index}</Mono>} />
+        <Metrica rotulo="Palavras" valor={<Mono>{q.word_count}</Mono>} />
+        <Metrica rotulo="Falantes" valor={<Mono>{q.speaker_count}</Mono>} />
+      </div>
+
+      {analise.speakers.length > 0 ? (
+        <div className="mt-4 space-y-1.5">
+          {analise.speakers.map((f) => (
+            <div
+              key={f.name}
+              className="flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface-2 px-3 py-2 text-[12.5px]"
+            >
+              <span className="font-medium text-ink">{f.name}</span>
+              <Badge tom={f.side === 'vendedor' ? 'accent' : f.side === 'cliente' ? 'health' : 'neutro'}>
+                {f.side}
+              </Badge>
+              <Mono className="text-[11px] tabular-nums text-ink-faint">
+                confiança {f.confidence.toFixed(2)}
+              </Mono>
+              {f.signals.length > 0 ? (
+                <span className="min-w-0 truncate font-mono text-[10.5px] text-ink-faint">
+                  {f.signals.join(' · ')}
+                </span>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {q.warnings.length > 0 ? (
+        <ul className="mt-4 space-y-1.5">
+          {q.warnings.map((w) => (
+            <li key={w} className="flex gap-2 text-[12px] leading-snug text-ink-dim">
+              <TriangleAlert size={13} className="mt-0.5 shrink-0 text-warn" />
+              {w}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </Secao>
   );
 }
@@ -335,13 +717,38 @@ function ScoreCard({
 }: {
   titulo: string;
   icone: ReactNode;
-  valor: number;
+  valor: number | null;
   tom: Tom;
   fatores: AnalysisResult['score_factors'];
   onSelect: (e: Evidence | undefined) => void;
 }) {
+  /*
+   * Score nulo é abstenção declarada do motor, não dado faltando. Mostrar "—"
+   * com o motivo é mais honesto do que mostrar 0, que o vendedor leria como
+   * "risco nenhum" — exatamente a leitura errada.
+   */
+  if (valor === null) {
+    return (
+      <section>
+        <div className="flex items-center gap-1.5 text-ink-dim">
+          {icone}
+          <h3 className="text-[12px] font-semibold uppercase tracking-wide">{titulo}</h3>
+        </div>
+        <div className="mt-2 flex items-baseline gap-1">
+          <Mono tom="neutro" className="text-3xl text-ink-faint">
+            —
+          </Mono>
+        </div>
+        <p className="mt-2 text-[11.5px] leading-snug text-ink-faint">
+          Não calculado: sem separar quem é vendedor e quem é cliente, os sinais de risco não
+          podem ser atribuídos a ninguém.
+        </p>
+      </section>
+    );
+  }
+
   return (
-    <section className="vidro rounded-xl p-4">
+    <section>
       <div className="flex items-center gap-1.5 text-ink-dim">
         {icone}
         <h3 className="text-[12px] font-semibold uppercase tracking-wide">{titulo}</h3>
@@ -767,13 +1174,7 @@ function Extracoes({
             onSelect={onSelect}
             render={(d) => (d as (typeof analise.decisions)[number]).text}
           />
-          <GrupoTexto
-            titulo="Próximos passos"
-            itens={analise.next_steps}
-            sel={sel}
-            onSelect={onSelect}
-            render={(n) => (n as (typeof analise.next_steps)[number]).text}
-          />
+          {/* Próximos passos subiu para o painel "O que fazer". */}
           <GrupoTexto
             titulo="Riscos"
             itens={analise.risks}

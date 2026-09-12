@@ -28,6 +28,7 @@ Ana: Posso montar um comparativo linha a linha?
 Cláudio: Monta. Se a diferença real for pequena, eu defendo vocês aqui dentro.
 Ana: Te mando quinta.`,
     gold: gold({
+      papeis: { ana: 'vendedor', 'cláudio': 'cliente' },
       concorrentes: [{ nome: 'Senior Sistemas', ativo: true }],
       objecoes: ['preco', 'concorrencia', 'autoridade'],
       dores: [],
@@ -57,6 +58,7 @@ Carla: Mônica, me deixa trazer um plano de recuperação com governança semana
 Mônica: Quinze dias. Se passar disso, a conversa muda de assunto.
 Carla: Entendido.`,
     gold: gold({
+      papeis: { carla: 'vendedor', 'mônica': 'cliente' },
       concorrentes: [{ nome: 'Benner', ativo: true }],
       dores: ['suporte'],
       churn_claro: true,
@@ -85,6 +87,7 @@ Vanessa: Se isso me devolver duas pessoas por semana, já se paga.
 Ana: Posso trazer uma simulação com o volume de vocês?
 Vanessa: Traz. E me diz também quanto tempo leva pra implantar.`,
     gold: gold({
+      papeis: { ana: 'vendedor', vanessa: 'cliente' },
       produtos: [{ nome: 'TOTVS Techfin', status: 'oportunidade' }],
       dores: ['financeiro', 'processo_manual'],
       unidades_oportunidade: ['techfin'],
@@ -114,6 +117,7 @@ Nilton: Quero ver isso com número. Me traz uma simulação com uma medição re
 Ana: Trago. Preciso que o senhor me autorize a puxar os dados de uma obra.
 Nilton: Autorizo. Fala com o Marcelo do financeiro que ele te passa.`,
     gold: gold({
+      papeis: { ana: 'vendedor', nilton: 'cliente' },
       produtos: [
         { nome: 'TOTVS Protheus', status: 'em_uso' },
         { nome: 'TOTVS Techfin', status: 'oportunidade' },
@@ -146,6 +150,7 @@ Tatiana: Isso seria ótimo pra apresentar pro conselho. Eles vivem perguntando q
 Ana: Consigo montar a conta de custo por aluno com os seus dados.
 Tatiana: Monta e marca uma call comigo e com o meu head de marketing.`,
     gold: gold({
+      papeis: { ana: 'vendedor', tatiana: 'cliente' },
       produtos: [
         { nome: 'RD Station Marketing', status: 'oportunidade' },
         { nome: 'RD Station CRM', status: 'oportunidade' },
@@ -179,6 +184,7 @@ Edson: E já vai agendando o kickoff pro início do mês que vem.
 Ana: Agendo. Preciso que você indique o sponsor interno.
 Edson: Sou eu mesmo. Aqui quem decide investimento de sistema sou eu.`,
     gold: gold({
+      papeis: { ana: 'vendedor', edson: 'cliente' },
       objecoes: ['preco'],
       dores: [],
       upsell_claro: true,
@@ -209,6 +215,7 @@ Rafael: Combinado. Alguma janela que eu deva evitar?
 Diego: Evita entre onze e treze, que é backup.
 Rafael: Anotado.`,
     gold: gold({
+      papeis: { rafael: 'vendedor', diego: 'cliente' },
       dores: [],
       sentimento: 'neutro',
       poder_decisao: 'desconhecido',
@@ -235,6 +242,7 @@ Marlene: É. Olha, hoje eu queria só que vocês conhecessem a estrutura. Amanh�
 Ana: Perfeito, é assim mesmo que a gente gosta de começar.
 Marlene: Então vem, deixa eu te mostrar o armazém.`,
     gold: gold({
+      papeis: { ana: 'vendedor', marlene: 'cliente' },
       dores: [],
       sentimento: 'positivo',
       poder_decisao: 'desconhecido',
@@ -261,6 +269,7 @@ Leandro: Faz sentido pra gente. Manda uma proposta que eu levo pro comitê de in
 Ana: Mando até quarta. Quem participa desse comitê?
 Leandro: Eu, o controller e o diretor industrial. Quem bate o martelo é o diretor.`,
     gold: gold({
+      papeis: { ana: 'vendedor', leandro: 'cliente' },
       concorrentes: [{ nome: 'Oracle', ativo: false }],
       dores: ['fiscal', 'processo_manual'],
       unidades_oportunidade: ['gestao'],
@@ -287,6 +296,7 @@ Carla: Agradeço a transparência. Me dá uma semana pra montar uma revisão com
 Gustavo: Uma semana eu te dou. Depois disso eu preciso levar alguma coisa pro meu sócio.
 Carla: Terei.`,
     gold: gold({
+      papeis: { carla: 'vendedor', gustavo: 'cliente' },
       concorrentes: [{ nome: 'Alterdata', ativo: true }],
       objecoes: ['preco'],
       dores: ['custo'],
@@ -308,6 +318,7 @@ Wagner: Entendi.
 Ana: Ficou alguma dúvida?
 Wagner: Não, ficou claro. Vou conversar internamente.`,
     gold: gold({
+      papeis: { ana: 'vendedor', wagner: 'cliente' },
       dores: [],
       sentimento: 'neutro',
       poder_decisao: 'desconhecido',
@@ -335,6 +346,7 @@ Sandra: O preço continua alto pro que a gente vai usar de verdade. Mas isso a g
 Ana: Justo.
 Sandra: Se falhar de novo, eu paro a conversa. Sem drama, mas paro.`,
     gold: gold({
+      papeis: { ana: 'vendedor', sandra: 'cliente' },
       objecoes: ['preco'],
       dores: [],
       churn_claro: true,
@@ -363,12 +375,86 @@ Almeida: Faça isso. Porque do jeito que está, a recomendação que vai subir �
 Carla: Me dá até o fim do mês para trazer a proposta de SLA.
 Almeida: Tem até lá.`,
     gold: gold({
+      papeis: { carla: 'vendedor', almeida: 'cliente' },
       dores: ['suporte'],
       churn_claro: true,
       sentimento: 'negativo',
       poder_decisao: 'influenciador',
       interesse: [5, 35],
       churn_risco: 'alto',
+    }),
+  },
+
+  /*
+   * ADVERSARIAIS — o cliente abre a reunião.
+   *
+   * Escritas pelo mesmo motivo das de dev: sem elas o baseline "quem fala
+   * primeiro é o vendedor" é perfeito por construção também no holdout, e a
+   * acurácia de papel medida aqui não significaria nada.
+   *
+   * São cenários correntes em campo — o cliente que antecipa a conversa de
+   * renovação, e o comitê do cliente que convoca o fornecedor — escolhidos por
+   * serem realistas, não por mirarem alguma falha já observada do motor. Erro
+   * individual delas continua fechado a diagnóstico.
+   */
+
+  {
+    codigo: 'HLD-14',
+    cenario: 'renovacao_aberta_pelo_cliente',
+    particao: 'holdout',
+    cliente: 'Auto Peças Quatro Rodas',
+    texto: `Rogério: Carla, eu adiantei essa conversa de propósito, antes de vocês me mandarem a renovação.
+Carla: Tudo bem. Me conta o que você está pensando.
+Rogério: Eu quero renovar, isso não está em discussão. O que eu não quero é renovar no mesmo desenho.
+Carla: Que parte incomoda?
+Rogério: A gente paga por trinta e cinco licenças e usa vinte e duas. Isso vem se arrastando desde que fechamos a filial de Betim.
+Carla: Isso a gente consegue ajustar no aditivo.
+Rogério: E tem outra: o módulo de compras ninguém usa. Foi contratado no pacote e nunca saiu do papel.
+Carla: Aí eu prefiro entender antes de tirar. Se ninguém usou, pode ser que faltou implantação, não que o módulo não sirva.
+Rogério: Pode ser. Mas hoje ele é custo sem retorno.
+Carla: Deixa eu levantar o histórico de uso e te trazer as duas opções: ativar direito ou retirar do contrato.
+Rogério: Me traz até o dia vinte, que é quando eu fecho o orçamento do ano.
+Carla: Até o dia vinte.`,
+    gold: gold({
+      papeis: { rogério: 'cliente', carla: 'vendedor' },
+      dores: ['custo'],
+      objecoes: ['preco'],
+      sentimento: 'misto',
+      poder_decisao: 'decisor',
+      interesse: [45, 72],
+      churn_risco: 'medio',
+    }),
+  },
+
+  {
+    codigo: 'HLD-15',
+    cenario: 'descoberta_com_tres_do_cliente',
+    particao: 'holdout',
+    cliente: 'Rede Farmacêutica Bom Preço',
+    texto: `Marcelo: Ana, obrigado por vir. Deixa eu apresentar o time: a Renata é do financeiro e o Douglas cuida da TI.
+Ana: Prazer a todos.
+Marcelo: A gente chamou vocês porque o fechamento contábil virou um problema de gestão, não só de contabilidade.
+Renata: Eu fecho o mês em onze dias úteis. Deveria fechar em cinco. E fecho porque eu viro a noite, não porque o processo funciona.
+Ana: O que consome esses dias?
+Renata: Conciliação. A gente tem trinta e duas lojas e cada uma manda o movimento de um jeito diferente.
+Douglas: E a integração que a gente fez internamente quebra toda vez que muda alguma coisa no meio do caminho. Eu não tenho time pra sustentar aquilo.
+Ana: Vocês já avaliaram alguma solução de mercado pra isso?
+Douglas: A gente olhou a Alterdata no ano passado, mas parou por falta de gente pra tocar o projeto.
+Marcelo: Dessa vez é diferente. Eu já tenho verba aprovada pro ano que vem.
+Ana: De que ordem, se puder falar?
+Marcelo: Uns duzentos mil. Não é público isso, tá?
+Ana: Fica entre nós. Posso montar um desenho e voltar com vocês três juntos?
+Marcelo: Pode. Marca com a minha secretária.`,
+    gold: gold({
+      papeis: { marcelo: 'cliente', ana: 'vendedor', renata: 'cliente', douglas: 'cliente' },
+      concorrentes: [{ nome: 'Alterdata', ativo: false }],
+      dores: ['financeiro', 'integracao'],
+      unidades_oportunidade: ['techfin'],
+      budget: 200000,
+      sentimento: 'misto',
+      poder_decisao: 'decisor',
+      interesse: [70, 92],
+      churn_risco: 'baixo',
     }),
   },
 ];

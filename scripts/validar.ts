@@ -62,6 +62,49 @@ function tabela(titulo: string, m: RelatorioMetricas) {
   p(`MAE interesse: ${m.mae.interesse} pontos · MAE talk ratio: ${m.mae.talk_ratio}`);
   p(`cobertura de evidência: ${(m.cobertura_evidencia * 100).toFixed(2)}%`);
 
+  const pa = m.papel;
+  if (pa.por_falante.total > 0) {
+    const folga = pa.por_falante.taxa - pa.baseline_primeiro_a_falar.taxa;
+    p();
+    p('papel de falante (vendedor / cliente)');
+    p('─'.repeat(60));
+    p(
+      `acurácia por falante       ${pa.por_falante.taxa.toFixed(3).padStart(8)}   (${pa.por_falante.acertos}/${pa.por_falante.total})`,
+    );
+    p(
+      `baseline "quem abre vende" ${pa.baseline_primeiro_a_falar.taxa.toFixed(3).padStart(8)}   (${pa.baseline_primeiro_a_falar.acertos}/${pa.baseline_primeiro_a_falar.total})`,
+    );
+    const veredito =
+      folga < 0
+        ? '<-- PIOR que o chute burro'
+        : folga === 0
+          ? '<-- empatou com o chute burro'
+          : folga < 0.05
+            ? '<-- folga pequena demais para comemorar'
+            : '';
+    p(`folga sobre o baseline     ${(folga >= 0 ? '+' : '') + folga.toFixed(3)}`.padEnd(45) + veredito);
+
+    if (pa.baseline_primeiro_a_falar.taxa === 1) {
+      p();
+      p('  AVISO: o baseline acertou TUDO. Neste corpus o vendedor abre a reunião em');
+      p('  100% das amostras, então "quem fala primeiro é o vendedor" é perfeito por');
+      p('  construção e nenhuma inferência consegue ganhar dele — no máximo empatar.');
+      p('  Enquanto isso valer, este bloco NÃO valida a inferência de papel: ele só');
+      p('  mede o quanto o corpus é previsível. Só amostras adversariais (cliente');
+      p('  abrindo a call, CS em que o vendedor é CSM, três pessoas do lado do');
+      p('  cliente) tornam este número informativo.');
+    }
+    p(
+      `taxa de inversão           ${pa.inversoes.taxa.toFixed(3).padStart(8)}   (${pa.inversoes.amostras}/${pa.inversoes.total} amostras com os lados trocados)`,
+    );
+    p(
+      `decidido no último recurso  ${String(pa.amostras_por_ultimo_recurso).padStart(7)} amostras (placar abaixo do limiar)`,
+    );
+    p(
+      `   destas, chute puro       ${String(pa.amostras_por_ordem_de_fala).padStart(7)} amostras (empate: só quem falou primeiro)`,
+    );
+  }
+
   p();
   p('matriz de confusão — risco de churn (linha = gabarito, coluna = motor)');
   p('            baixo   medio    alto');
@@ -191,10 +234,19 @@ if (mostrarErros) {
     if (a.persona.decision_power !== g.poder_decisao) {
       linhas.push(`  poder: esperado ${g.poder_decisao}, veio ${a.persona.decision_power}`);
     }
-    if (a.interest_score < g.interesse[0] || a.interest_score > g.interesse[1]) {
+    if (a.interest_score === null) {
+      linhas.push('  interesse: motor se absteve — não conseguiu atribuir a fala a um lado');
+    } else if (a.interest_score < g.interesse[0] || a.interest_score > g.interesse[1]) {
       linhas.push(`  interesse: esperado ${g.interesse[0]}-${g.interesse[1]}, veio ${a.interest_score}`);
     }
-    const banda = a.churn_risk >= 67 ? 'alto' : a.churn_risk >= 34 ? 'medio' : 'baixo';
+    const banda =
+      a.churn_risk === null
+        ? 'abstido'
+        : a.churn_risk >= 67
+          ? 'alto'
+          : a.churn_risk >= 34
+            ? 'medio'
+            : 'baixo';
     if (banda !== g.churn_risco) {
       linhas.push(`  churn: esperado ${g.churn_risco}, veio ${banda} (${a.churn_risk})`);
     }

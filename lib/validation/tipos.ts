@@ -29,6 +29,20 @@ export type Gabarito = {
   interesse: [number, number];
   churn_risco: 'baixo' | 'medio' | 'alto';
   talk_ratio_vendedor?: [number, number];
+  /**
+   * Quem vende e quem compra, por falante. Chave em minúsculo, como o rótulo
+   * aparece na transcrição.
+   *
+   * PROTOCOLO DESTA ANOTAÇÃO: o lado foi decidido pela empresa nomeada em
+   * `Amostra.cliente` — quem trabalha nela é o comprador, quem não trabalha é
+   * o vendedor. É um critério que existe no corpus desde antes dos extratores
+   * e que não olha nenhum dos sinais que a inferência usa (cargo, dêixis, taxa
+   * de pergunta). Anotar por dêixis seria medir o motor contra ele mesmo.
+   *
+   * Ausente quando a amostra não tem rótulo de falante: sem turno não há papel
+   * a anotar. Mesma convenção de `talk_ratio_vendedor`.
+   */
+  papeis?: Record<string, 'vendedor' | 'cliente'>;
 };
 
 export type Particao = 'dev' | 'holdout';

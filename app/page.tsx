@@ -8,7 +8,7 @@ import {
   TrendingUp,
   TriangleAlert,
 } from 'lucide-react';
-import { Badge, BotaoLink, Card, EmptyState, Mono, PageHeader, StatTile } from '@/components/ui';
+import { Badge, BotaoLink, Card, EmptyState, FaixaDeMetricas, Mono, PageHeader, StatTile } from '@/components/ui';
 import { tomChurn, tomHealth } from '@/components/cliente-ui';
 import { supabaseConfigurado, supabaseServer } from '@/lib/supabase/server';
 import { SemBanco } from '@/components/sem-banco';
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <FaixaDeMetricas>
         <StatTile
           rotulo="Reuniões analisadas"
           valor={String(t.totalAnalises)}
@@ -136,7 +136,7 @@ export default async function DashboardPage() {
           detalhe={`${tarefas.length} em aberto no total`}
           tom={atrasadas.length > 0 ? 'warn' : 'neutro'}
         />
-      </div>
+      </FaixaDeMetricas>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Card
