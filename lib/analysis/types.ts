@@ -224,6 +224,15 @@ export type QualidadeTranscricao = {
   lexical_diversity: number;
   redacted_entities: number;
   reliability_index: number;
+  /**
+   * Dá para atribuir cada fala a um lado da mesa?
+   *
+   * Quando é false, interesse e risco de churn voltam null. Não é preciosismo:
+   * numa gravação sem diarização, "trocar de sistema" aparece tanto quando o
+   * cliente ameaça sair quanto quando ele explica que NÃO quer sair, e somar
+   * esses sinais satura o churn em 100 numa conta que quer ficar.
+   */
+  scores_atribuiveis: boolean;
   warnings: string[];
 };
 
@@ -299,8 +308,14 @@ export type AnalysisResult = {
   // Invariante: a soma dos deltas de `score_factors` é EXATAMENTE
   // `interest_score`. Por isso os fatores de churn moram em campo próprio —
   // misturar os dois quebraria a conta que a UI mostra ao vendedor.
-  interest_score: number;
-  churn_risk: number;
+  /**
+   * null quando `transcript_quality.scores_atribuiveis` é false: o motor não
+   * consegue dizer quem falou o quê e prefere não responder a responder
+   * errado. Nesse caso `score_factors` e `churn_factors` vêm vazios — conta
+   * vazia não pode parecer conta zerada.
+   */
+  interest_score: number | null;
+  churn_risk: number | null;
   score_factors: FatorScore[];
   churn_factors: FatorScore[];
 

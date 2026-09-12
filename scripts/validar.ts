@@ -229,10 +229,19 @@ if (mostrarErros) {
     if (a.persona.decision_power !== g.poder_decisao) {
       linhas.push(`  poder: esperado ${g.poder_decisao}, veio ${a.persona.decision_power}`);
     }
-    if (a.interest_score < g.interesse[0] || a.interest_score > g.interesse[1]) {
+    if (a.interest_score === null) {
+      linhas.push('  interesse: motor se absteve — não conseguiu atribuir a fala a um lado');
+    } else if (a.interest_score < g.interesse[0] || a.interest_score > g.interesse[1]) {
       linhas.push(`  interesse: esperado ${g.interesse[0]}-${g.interesse[1]}, veio ${a.interest_score}`);
     }
-    const banda = a.churn_risk >= 67 ? 'alto' : a.churn_risk >= 34 ? 'medio' : 'baixo';
+    const banda =
+      a.churn_risk === null
+        ? 'abstido'
+        : a.churn_risk >= 67
+          ? 'alto'
+          : a.churn_risk >= 34
+            ? 'medio'
+            : 'baixo';
     if (banda !== g.churn_risco) {
       linhas.push(`  churn: esperado ${g.churn_risco}, veio ${banda} (${a.churn_risk})`);
     }

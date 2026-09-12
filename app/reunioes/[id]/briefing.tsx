@@ -108,7 +108,7 @@ export function Briefing({
             titulo="Interesse"
             icone={<Gauge size={14} />}
             valor={analise.interest_score}
-            tom={analise.interest_score >= 60 ? 'health' : analise.interest_score >= 40 ? 'warn' : 'risk'}
+            tom={(analise.interest_score ?? 0) >= 60 ? 'health' : (analise.interest_score ?? 0) >= 40 ? 'warn' : 'risk'}
             fatores={analise.score_factors}
             onSelect={selecionar}
           />
@@ -116,7 +116,7 @@ export function Briefing({
             titulo="Risco de churn"
             icone={<TrendingDown size={14} />}
             valor={analise.churn_risk}
-            tom={analise.churn_risk >= 67 ? 'risk' : analise.churn_risk >= 34 ? 'warn' : 'health'}
+            tom={(analise.churn_risk ?? 0) >= 67 ? 'risk' : (analise.churn_risk ?? 0) >= 34 ? 'warn' : 'health'}
             fatores={analise.churn_factors}
             onSelect={selecionar}
           />
@@ -335,11 +335,36 @@ function ScoreCard({
 }: {
   titulo: string;
   icone: ReactNode;
-  valor: number;
+  valor: number | null;
   tom: Tom;
   fatores: AnalysisResult['score_factors'];
   onSelect: (e: Evidence | undefined) => void;
 }) {
+  /*
+   * Score nulo é abstenção declarada do motor, não dado faltando. Mostrar "—"
+   * com o motivo é mais honesto do que mostrar 0, que o vendedor leria como
+   * "risco nenhum" — exatamente a leitura errada.
+   */
+  if (valor === null) {
+    return (
+      <section className="vidro rounded-xl p-4">
+        <div className="flex items-center gap-1.5 text-ink-dim">
+          {icone}
+          <h3 className="text-[12px] font-semibold uppercase tracking-wide">{titulo}</h3>
+        </div>
+        <div className="mt-2 flex items-baseline gap-1">
+          <Mono tom="neutro" className="text-3xl text-ink-faint">
+            —
+          </Mono>
+        </div>
+        <p className="mt-2 text-[11.5px] leading-snug text-ink-faint">
+          Não calculado: sem separar quem é vendedor e quem é cliente, os sinais de risco não
+          podem ser atribuídos a ninguém.
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section className="vidro rounded-xl p-4">
       <div className="flex items-center gap-1.5 text-ink-dim">

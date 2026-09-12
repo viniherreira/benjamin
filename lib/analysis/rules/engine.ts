@@ -171,13 +171,26 @@ export function analisarComRegras(entrada: EntradaAnalise): AnalysisResult {
     transcript_quality,
     bant,
 
-    interest_score,
-    churn_risk: churn.churn_risk,
-    score_factors,
-    churn_factors: churn.fatores,
+    /*
+     * Abstenção. Sem conseguir separar a fala do cliente da do vendedor, estes
+     * dois números não são estimativa ruim — são invenção, e no extremo da
+     * escala. Medido numa transcrição de áudio real sem diarização: churn 100 e
+     * interesse 12 numa conversa em que o cliente diz "não é que a gente já
+     * decidiu sair" e "prefiro resolver com vocês". Os três sinais de risco que
+     * produziram isso eram o cliente argumentando CONTRA a saída.
+     *
+     * Os fatores vão junto: conta vazia não pode parecer conta zerada na tela.
+     */
+    interest_score: transcript_quality.scores_atribuiveis ? interest_score : null,
+    churn_risk: transcript_quality.scores_atribuiveis ? churn.churn_risk : null,
+    score_factors: transcript_quality.scores_atribuiveis ? score_factors : [],
+    churn_factors: transcript_quality.scores_atribuiveis ? churn.fatores : [],
 
     business_value: {
-      revenue_at_risk: contrato !== null && churn.churn_risk >= 67 ? contrato : null,
+      revenue_at_risk:
+        contrato !== null && transcript_quality.scores_atribuiveis && churn.churn_risk >= 67
+          ? contrato
+          : null,
       pipeline_value: pipeline > 0 ? Math.round(pipeline) : null,
       assumptions,
     },

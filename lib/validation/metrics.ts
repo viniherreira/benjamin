@@ -230,6 +230,8 @@ export function calcularMetricas(resultados: ResultadoAmostra[]): RelatorioMetri
   };
 
   let sentimentoOk = 0;
+  let interesseTotal = 0;
+  let churnTotal = 0;
   let poderOk = 0;
   let interesseNaFaixa = 0;
   let churnBandaOk = 0;
@@ -301,15 +303,27 @@ export function calcularMetricas(resultados: ResultadoAmostra[]): RelatorioMetri
     if (a.sentiment === g.sentimento) sentimentoOk++;
     if (a.persona.decision_power === g.poder_decisao) poderOk++;
 
-    const [minI, maxI] = g.interesse;
-    if (a.interest_score >= minI && a.interest_score <= maxI) interesseNaFaixa++;
-    const meio = (minI + maxI) / 2;
-    erroInteresse += Math.abs(a.interest_score - meio);
+    /*
+     * Score abstido não entra na conta — mesma regra que o talk ratio já
+     * seguia quando volta null. O denominador encolhe e aparece no relatório
+     * como (acertos/total), então abster-se demais fica visível em vez de
+     * virar nota alta de graça.
+     */
+    if (a.interest_score !== null) {
+      interesseTotal++;
+      const [minI, maxI] = g.interesse;
+      if (a.interest_score >= minI && a.interest_score <= maxI) interesseNaFaixa++;
+      const meio = (minI + maxI) / 2;
+      erroInteresse += Math.abs(a.interest_score - meio);
+    }
 
-    const banda = a.churn_risk >= 67 ? 'alto' : a.churn_risk >= 34 ? 'medio' : 'baixo';
-    const linha = matriz[g.churn_risco];
-    if (linha) linha[banda] = (linha[banda] ?? 0) + 1;
-    if (banda === g.churn_risco) churnBandaOk++;
+    if (a.churn_risk !== null) {
+      churnTotal++;
+      const banda = a.churn_risk >= 67 ? 'alto' : a.churn_risk >= 34 ? 'medio' : 'baixo';
+      const linha = matriz[g.churn_risco];
+      if (linha) linha[banda] = (linha[banda] ?? 0) + 1;
+      if (banda === g.churn_risco) churnBandaOk++;
+    }
 
     if (g.talk_ratio_vendedor && a.conversation_metrics.talk_ratio_seller !== null) {
       talkTotal++;
@@ -360,12 +374,12 @@ export function calcularMetricas(resultados: ResultadoAmostra[]): RelatorioMetri
     acuracias: {
       'sentimento (4 classes)': acuracia(sentimentoOk, n),
       'poder de decisão': acuracia(poderOk, n),
-      'interesse na faixa': acuracia(interesseNaFaixa, n),
-      'banda de churn': acuracia(churnBandaOk, n),
+      'interesse na faixa': acuracia(interesseNaFaixa, interesseTotal),
+      'banda de churn': acuracia(churnBandaOk, churnTotal),
       'talk ratio na faixa': acuracia(talkOk, talkTotal),
     },
     mae: {
-      interesse: n === 0 ? 0 : Number((erroInteresse / n).toFixed(1)),
+      interesse: interesseTotal === 0 ? 0 : Number((erroInteresse / interesseTotal).toFixed(1)),
       talk_ratio: talkTotal === 0 ? 0 : Number((erroTalk / talkTotal).toFixed(3)),
     },
     matriz_churn: matriz,

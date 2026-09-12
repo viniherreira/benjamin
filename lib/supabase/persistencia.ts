@@ -187,7 +187,9 @@ function montarAlertas(
   const alertas: AlertaInsert[] = [];
   const base = { org_id: ref.orgId, customer_id: ref.customerId, meeting_id: ref.meetingId };
 
-  if (a.churn_risk >= 67) {
+  // Score abstido não gera alerta: alertar sobre risco que o motor não conseguiu
+  // medir seria transformar a abstenção em afirmação no caminho de volta.
+  if (a.churn_risk !== null && a.churn_risk >= 67) {
     const sinal = [...a.churn_signals].sort((x, y) => y.weight - x.weight)[0];
     alertas.push({
       ...base,
@@ -371,8 +373,22 @@ async function gravarAnalise(p: {
       sentiment: analise.sentiment,
       sentiment_score: analise.sentiment_score,
       aspect_sentiment: j(analise.aspect_sentiment),
-      interest_score: analise.interest_score,
-      churn_risk: analise.churn_risk,
+      /*
+       * PENDENTE: as colunas interest_score e churn_risk são NOT NULL.
+       *
+       * Enquanto forem, a abstenção do motor não cabe no banco e grava 0. O
+       * flag `scores_atribuiveis` viaja em transcript_quality (coluna jsonb) e
+       * é ele que `linhaParaAnalise` usa para devolver null na leitura — a
+       * aplicação fica honesta, mas uma consulta SQL direta lê 0 e entende
+       * "sem risco". Corrigir com:
+       *
+       *   alter table analyses alter column interest_score drop not null;
+       *   alter table analyses alter column churn_risk     drop not null;
+       *
+       * e regerar database.types.ts.
+       */
+      interest_score: analise.interest_score ?? 0,
+      churn_risk: analise.churn_risk ?? 0,
       churn_signals: j(analise.churn_signals),
       upsell_signals: j(analise.upsell_signals),
       trust_score: analise.trust_score,
@@ -642,6 +658,7 @@ function linhaParaAnalise(
   texto: string,
 ): AnalysisResult {
   const a = <T>(v: Json): T => v as unknown as T;
+  const qualidadeTipada = a<AnalysisResult['transcript_quality']>(quality);
   const localizar = (quote: string): Evidence => {
     const start = quote ? texto.indexOf(quote) : -1;
     return start >= 0 ? { quote, start, end: start + quote.length } : { quote, start: 0, end: 0 };
@@ -689,8 +706,10 @@ function linhaParaAnalise(
     speakers: [],
     transcript_quality: a(quality),
     bant: a(r.bant),
-    interest_score: r.interest_score,
-    churn_risk: r.churn_risk,
+    // Ver a pendência em gravarAnalise: o 0 gravado volta a ser null aqui,
+    // usando o flag que viajou dentro de transcript_quality.
+    interest_score: qualidadeTipada.scores_atribuiveis === false ? null : r.interest_score,
+    churn_risk: qualidadeTipada.scores_atribuiveis === false ? null : r.churn_risk,
     score_factors: a(r.score_factors),
     churn_factors: a(r.churn_factors),
     business_value: a(r.business_value),
