@@ -126,8 +126,9 @@ export default async function CoachingPage() {
         descricao="A métrica que a TOTVS pediu por escrito: o vendedor está ouvindo mais do que falando? Tom de desenvolvimento, não de avaliação."
       />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="vidro rounded-xl p-4">
+      <section className="vidro rounded-xl px-5 py-4">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-6 lg:grid-cols-4 sm:[&>*+*]:border-l sm:[&>*+*]:border-line sm:[&>*+*]:pl-8">
+        <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
             Talk ratio médio
           </p>
@@ -140,28 +141,29 @@ export default async function CoachingPage() {
             faixa de referência {pct(FAIXA_IDEAL.min)}–{pct(FAIXA_IDEAL.max)}
           </p>
         </div>
-        <div className="vidro rounded-xl p-4">
+        <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
             Perguntas por reunião
           </p>
           <p className="mt-2 font-mono text-2xl text-ink">{mediaPerguntas.toFixed(1)}</p>
           <p className="mt-1 text-[11px] text-ink-faint">{mediaAbertas.toFixed(1)} abertas em média</p>
         </div>
-        <div className="vidro rounded-xl p-4">
+        <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
             Maior monólogo
           </p>
           <p className="mt-2 font-mono text-2xl text-ink">{Math.round(mediaMonologo)}</p>
           <p className="mt-1 text-[11px] text-ink-faint">palavras, média das reuniões</p>
         </div>
-        <div className="vidro rounded-xl p-4">
+        <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
             Cobertura BANT
           </p>
           <p className="mt-2 font-mono text-2xl text-ink">{mediaBant.toFixed(1)}/4</p>
           <p className="mt-1 text-[11px] text-ink-faint">média por reunião</p>
         </div>
-      </div>
+        </div>
+      </section>
 
       {comTalkRatio.length > 0 ? (
         <div className="mt-4 grid gap-4 lg:grid-cols-2">

@@ -10,7 +10,7 @@ import {
   TrendingUp,
   TriangleAlert,
 } from 'lucide-react';
-import { Badge, Card, EmptyState, Mono, PageHeader, BotaoLink, type Tom } from '@/components/ui';
+import { Badge, Card, EmptyState, Mono, PageHeader, BotaoLink, type Tom, Painel } from '@/components/ui';
 import { tomChurn, tomHealth } from '@/components/cliente-ui';
 import { carregarTorre } from '@/lib/torre';
 import { supabaseConfigurado } from '@/lib/supabase/server';
@@ -52,7 +52,7 @@ function CardValor({
     risk: 'text-risk',
   };
   return (
-    <section className="vidro rounded-xl p-4">
+    <section className="min-w-0">
       <div className="flex items-center gap-1.5 text-ink-faint">
         {icone}
         <h2 className="text-[11px] font-semibold uppercase tracking-wide">{rotulo}</h2>
@@ -116,7 +116,8 @@ export default async function TorrePage() {
       />
 
       {/* Os três números que respondem "onde está o dinheiro" */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <section className="vidro rounded-xl px-5 py-4">
+        <div className="grid gap-x-8 gap-y-7 lg:grid-cols-3 lg:[&>*+*]:border-l lg:[&>*+*]:border-line lg:[&>*+*]:pl-8">
         <CardValor
           rotulo="Receita em risco"
           valor={fmtBRL(t.receita.total)}
@@ -141,11 +142,13 @@ export default async function TorrePage() {
           premissas={t.upsellParado.premissas}
           icone={<Clock size={13} />}
         />
-      </div>
+        </div>
+      </section>
 
       {/* Cross-BU: a prova de que o sistema enxerga além do ERP */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <Painel className="mt-4">
         <Card
+          plano
           titulo="Oportunidades por unidade de negócio"
           legenda="Gestão, RD Station e Techfin — o mapeamento Cross-BU"
           acoes={<Layers size={14} className="text-ink-faint" />}
@@ -179,6 +182,7 @@ export default async function TorrePage() {
         </Card>
 
         <Card
+          plano
           titulo="Escala do motor"
           legenda="Medido sobre as análises desta base, não estimado"
           acoes={<Activity size={14} className="text-ink-faint" />}
@@ -222,11 +226,12 @@ export default async function TorrePage() {
             ))}
           </ul>
         </Card>
-      </div>
+      </Painel>
 
       {/* Contas em risco, ranqueadas por valor */}
-      <div className="mt-4">
+      <Painel className="mt-4">
         <Card
+          plano
           titulo="Contas que pedem atenção"
           legenda="Ranqueadas por valor de contrato — churn médio ou alto, health baixo ou concorrente ativo"
           acoes={<Gauge size={14} className="text-ink-faint" />}
@@ -301,11 +306,12 @@ export default async function TorrePage() {
             </div>
           )}
         </Card>
-      </div>
+      </Painel>
 
       {/* Alertas de alta severidade */}
-      <div className="mt-4">
+      <Painel className="mt-4">
         <Card
+          plano
           titulo="Alertas de alta severidade"
           legenda="O que exige decisão agora"
           acoes={
@@ -352,7 +358,7 @@ export default async function TorrePage() {
             </ul>
           )}
         </Card>
-      </div>
+      </Painel>
     </>
   );
 }

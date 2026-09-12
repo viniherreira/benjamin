@@ -136,26 +136,29 @@ export default async function RadarPage({
             ) : null}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="vidro rounded-xl p-4">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
-                Sinais de dor
-              </p>
-              <p className="mt-2 font-mono text-2xl text-ink">{r.totalSinais}</p>
+          {/* Três leituras do mesmo radar: uma superfície, não três. */}
+          <section className="vidro rounded-xl px-5 py-4">
+            <div className="grid gap-x-8 gap-y-6 sm:grid-cols-3 sm:[&>*+*]:border-l sm:[&>*+*]:border-line sm:[&>*+*]:pl-8">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
+                  Sinais de dor
+                </p>
+                <p className="mt-2 font-mono text-2xl tabular-nums text-ink">{r.totalSinais}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
+                  Tópicos distintos
+                </p>
+                <p className="mt-2 font-mono text-2xl tabular-nums text-ink">{r.clusters.length}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
+                  Contas afetadas
+                </p>
+                <p className="mt-2 font-mono text-2xl tabular-nums text-ink">{r.totalClientes}</p>
+              </div>
             </div>
-            <div className="vidro rounded-xl p-4">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
-                Tópicos distintos
-              </p>
-              <p className="mt-2 font-mono text-2xl text-ink">{r.clusters.length}</p>
-            </div>
-            <div className="vidro rounded-xl p-4">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">
-                Contas afetadas
-              </p>
-              <p className="mt-2 font-mono text-2xl text-ink">{r.totalClientes}</p>
-            </div>
-          </div>
+          </section>
 
           {/* Cross-BU */}
           {r.porUnidade.length > 0 ? (
@@ -189,9 +192,12 @@ export default async function RadarPage({
                 </p>
               </div>
             ) : (
-              <ul className="space-y-3">
+              // Uma superfície para a lista inteira: cada dor era um painel de
+              // vidro próprio, e dez dores davam dez retângulos idênticos como
+              // estrutura da página. Agora o vidro é a lista; o hairline separa.
+              <ul className="vidro divide-y divide-line overflow-hidden rounded-xl">
                 {r.clusters.map((c, i) => (
-                  <li key={c.topico} className="vidro rounded-xl">
+                  <li key={c.topico}>
                     <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
                       <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-3 font-mono text-[11px] text-ink-dim">
                         {i + 1}
