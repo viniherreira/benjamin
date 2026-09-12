@@ -198,13 +198,13 @@ export function CapturaAoVivo({
 
       {erro ? <ErroLinha texto={erro} /> : null}
 
-      {consentiu ? (
-        <p className="text-[11px] leading-relaxed text-ink-faint">
-          O reconhecimento não separa quem falou. Sem marcação de falante, o briefing deixa as métricas
-          de conversa em branco em vez de inventar turnos — se precisar de talk ratio, edite o texto no
-          formato <span className="font-mono">Nome: fala</span> antes de analisar.
-        </p>
-      ) : null}
+      {/*
+        O aviso daqui era mais curto e falava só das métricas de conversa. Desde
+        que interesse e churn passaram a se abster sem diarização, o custo é
+        maior do que ele dizia — e é o mesmo custo da aba de áudio, então os
+        dois passam a dizer a mesma coisa.
+      */}
+      {consentiu ? <SemRotuloDeFalante /> : null}
     </div>
   );
 }
@@ -283,6 +283,8 @@ export function CapturaPorAudio({ onTexto }: { onTexto: (t: string) => void }) {
         </span>
       </label>
 
+      <SemRotuloDeFalante />
+
       {ok ? (
         <p className="inline-flex items-center gap-1.5 rounded-md border border-health/30 bg-health-soft/25 px-3 py-2 text-[12px] text-health">
           <Check size={13} />
@@ -323,6 +325,41 @@ export function CapturaPorAudio({ onTexto }: { onTexto: (t: string) => void }) {
 }
 
 /* ------------------------------------------------------------------ */
+
+/**
+ * O que a transcrição automática custa, dito antes e não depois.
+ *
+ * Nem o Whisper nem a Web Speech API separam quem falou: os dois devolvem um
+ * bloco de texto corrido. Metade do briefing depende de saber de quem é cada
+ * frase, e sem isso o motor se abstém em vez de chutar.
+ *
+ * Os números abaixo foram medidos sobre as 37 amostras do corpus, removendo os
+ * rótulos de falante e comparando as duas análises — não são estimativa.
+ */
+function SemRotuloDeFalante() {
+  return (
+    <div className="rounded-md border border-warn/30 bg-warn-soft/30 px-3 py-2.5">
+      <p className="flex items-start gap-1.5 text-[12px] font-medium text-ink">
+        <TriangleAlert size={13} className="mt-0.5 shrink-0 text-warn" />
+        A transcrição automática não separa quem falou
+      </p>
+      <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-dim">
+        Continuam saindo iguais: produtos, concorrentes, budget, objeções e tarefas.{' '}
+        <strong className="font-medium text-ink">Ficam indisponíveis</strong> o talk ratio e as
+        métricas de conversa, o interesse e o risco de churn — sem saber de quem é a fala, o motor
+        não tem como atribuir os sinais, e prefere não responder a responder errado. As dores ainda
+        aparecem, mas sem a garantia de que foi o cliente quem as disse.
+      </p>
+      <p className="mt-2 text-[11.5px] leading-relaxed text-ink-dim">
+        Para recuperar tudo isso, prefixe cada fala com o nome de quem fala no texto transcrito —{' '}
+        <code className="rounded bg-surface-3 px-1 py-0.5 font-mono text-[10.5px]">Ana:</code> e{' '}
+        <code className="rounded bg-surface-3 px-1 py-0.5 font-mono text-[10.5px]">João:</code> —
+        antes de analisar. É o que Meet, Teams e Zoom já entregam quando a legenda é exportada por
+        lá.
+      </p>
+    </div>
+  );
+}
 
 function Aviso({ icone, titulo, corpo }: { icone: React.ReactNode; titulo: string; corpo: string }) {
   return (

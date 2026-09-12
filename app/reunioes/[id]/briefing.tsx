@@ -152,6 +152,7 @@ export function Briefing({
               icone: <Target size={13} />,
               conteudo: (
                 <Grupo>
+                  <SemAtribuicao analise={analise} />
                   <Extracoes analise={analise} sel={sel} onSelect={selecionar} />
                   <SinaisChurnUpsell analise={analise} sel={sel} onSelect={selecionar} />
                   <Financeiro analise={analise} sel={sel} onSelect={selecionar} />
@@ -585,6 +586,33 @@ function Acoes({
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * Ressalva de atribuição.
+ *
+ * Sem separar quem falou, `ehFalaDoCliente` passa a aceitar qualquer sentença —
+ * a regra do projeto é extrair mesmo assim, só não afirmar de quem é a fala.
+ * Só que a tela vinha afirmando: um bloco chamado "Problemas / dores" logo
+ * abaixo do nome do cliente lê como dor DO cliente.
+ *
+ * Medido sobre as 37 amostras, removendo os rótulos: a lista de dores incha
+ * 30%, e o que entra é o vendedor descrevendo o problema numa demonstração.
+ * Não dá para separar depois; dá para avisar.
+ */
+function SemAtribuicao({ analise }: { analise: AnalysisResult }) {
+  if (analise.transcript_quality.scores_atribuiveis) return null;
+  return (
+    <div className="flex gap-2 rounded-md border border-warn/30 bg-warn-soft/30 px-3 py-2.5">
+      <TriangleAlert size={13} className="mt-0.5 shrink-0 text-warn" />
+      <p className="text-[11.5px] leading-relaxed text-ink-dim">
+        Esta transcrição não separa quem falou, então os itens abaixo saem da conversa inteira —{' '}
+        <strong className="font-medium text-ink">não só da fala do cliente</strong>. Uma dor descrita
+        pelo vendedor numa demonstração entra aqui do mesmo jeito. A citação de cada item continua
+        exata; o que falta é de quem ela é.
+      </p>
+    </div>
   );
 }
 
