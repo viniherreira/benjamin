@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <style>
+    .ficha { fill: #0a0a0b; }
+    .onda { stroke: #f3f4f8; }
+    .ponto { fill: #f3f4f8; }
+    @media (prefers-color-scheme: dark) {
+      .ficha { fill: #f2f3f5; }
+      .onda { stroke: #08090c; }
+      .ponto { fill: #08090c; }
+    }
+  </style>
+  <rect class="ficha" x="1" y="1" width="30" height="30" rx="9" />
+  <g class="onda" stroke-width="2.4" stroke-linecap="round">
+    <path d="M9 10.5v11" />
+    <path d="M14.5 13v6" />
+    <path d="M20 14.75v2.5" />
+  </g>
+  <circle class="ponto" cx="24.5" cy="16" r="1.6" />
+</svg>
