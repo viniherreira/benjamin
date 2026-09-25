@@ -14,7 +14,8 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { EXEMPLO_CANONICO } from '@/lib/analysis/exemplo-canonico';
-import { CapturaAoVivo, CapturaPorAudio } from './captura';
+import { CapturaPorAudio } from './captura';
+import { GravacaoReuniao } from './gravacao';
 
 type Aba = 'texto' | 'audio' | 'vivo';
 
@@ -132,8 +133,8 @@ export function FormIngestao() {
         <BotaoAba ativo={aba === 'audio'} onClick={() => setAba('audio')} icone={<AudioLines size={14} />} beta>
           Upload de áudio
         </BotaoAba>
-        <BotaoAba ativo={aba === 'vivo'} onClick={() => setAba('vivo')} icone={<Mic size={14} />} beta>
-          Gravar ao vivo
+        <BotaoAba ativo={aba === 'vivo'} onClick={() => setAba('vivo')} icone={<Mic size={14} />}>
+          Gravar reunião
         </BotaoAba>
         <Link
           href="/reunioes/lote"
@@ -252,7 +253,7 @@ export function FormIngestao() {
         ) : (
           <div className="space-y-3">
             {aba === 'vivo' ? (
-              <CapturaAoVivo texto={texto} onTexto={setTexto} />
+              <GravacaoReuniao onTexto={setTexto} />
             ) : (
               <CapturaPorAudio onTexto={setTexto} />
             )}

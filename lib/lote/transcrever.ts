@@ -1,5 +1,6 @@
 import { ErroFatal, ErroSessao, ErroTransitorio } from './agenda';
 import { fatiarAudio, limparTranscricaoDeTrecho, type Trecho } from './audio';
+import type { Segmento } from '../gravacao/mesclar';
 
 /**
  * Transcreve um arquivo de áudio de qualquer tamanho pelo /api/transcribe.
@@ -12,12 +13,14 @@ import { fatiarAudio, limparTranscricaoDeTrecho, type Trecho } from './audio';
  * já voltou, para que uma nova tentativa da reunião inteira retome dali.
  */
 
+export type TrechoTranscrito = { texto: string; segmentos: Segmento[] };
+
 export type OpcoesTranscricao = {
   sinal?: AbortSignal;
   aoProgresso?: (feitos: number, total: number) => void;
   /** Trechos da mesma reunião enviados ao mesmo tempo. */
   concorrencia?: number;
-  cache?: Map<number, string>;
+  cache?: Map<number, TrechoTranscrito>;
 };
 
 const TENTATIVAS_POR_TRECHO = 5;
@@ -41,7 +44,7 @@ async function mensagemDe(r: Response): Promise<string> {
   return corpo?.erro ?? `HTTP ${r.status}`;
 }
 
-async function transcreverTrecho(t: Trecho, sinal?: AbortSignal): Promise<string> {
+async function transcreverTrecho(t: Trecho, sinal?: AbortSignal): Promise<TrechoTranscrito> {
   for (let tentativa = 1; ; tentativa++) {
     const form = new FormData();
     form.append('audio', t.blob, t.nome);
@@ -57,8 +60,11 @@ async function transcreverTrecho(t: Trecho, sinal?: AbortSignal): Promise<string
     }
 
     if (r.ok) {
-      const corpo = (await r.json()) as { texto: string };
-      return limparTranscricaoDeTrecho(corpo.texto ?? '');
+      const corpo = (await r.json()) as { texto?: string; segmentos?: Segmento[] };
+      // Os tempos do provedor são relativos ao trecho; somar o início do trecho
+      // os põe na linha do tempo da reunião inteira.
+      const segmentos = (corpo.segmentos ?? []).map((g) => ({ ...g, inicio: g.inicio + t.inicio, fim: g.fim + t.inicio }));
+      return { texto: limparTranscricaoDeTrecho(corpo.texto ?? ''), segmentos };
     }
     if (r.status === 401) throw new ErroSessao();
     if (r.status === 503) throw new ErroFatal(await mensagemDe(r), 'transcrever');
@@ -72,18 +78,25 @@ async function transcreverTrecho(t: Trecho, sinal?: AbortSignal): Promise<string
   }
 }
 
-export type ResultadoTranscricao = { texto: string; trechos: number; silenciosos: number; duracaoSegundos: number | null };
+export type ResultadoTranscricao = {
+  texto: string;
+  /** Segmentos com tempo absoluto, em segundos desde o início do arquivo. */
+  segmentos: Segmento[];
+  trechos: number;
+  silenciosos: number;
+  duracaoSegundos: number | null;
+};
 
 export async function transcreverArquivo(arquivo: Blob, nome: string, o: OpcoesTranscricao = {}): Promise<ResultadoTranscricao> {
   const { trechos, silenciosos, duracaoSegundos } = await fatiarAudio(arquivo, nome);
   if (trechos.length === 0) throw new Error('O áudio não tem fala detectável — só silêncio.');
 
-  const cache = o.cache ?? new Map<number, string>();
-  const textos: string[] = new Array(trechos.length);
+  const cache = o.cache ?? new Map<number, TrechoTranscrito>();
+  const resultados: TrechoTranscrito[] = new Array(trechos.length);
   let feitos = 0;
   trechos.forEach((_, i) => {
     if (cache.has(i)) {
-      textos[i] = cache.get(i)!;
+      resultados[i] = cache.get(i)!;
       feitos++;
     }
   });
@@ -95,16 +108,17 @@ export async function transcreverArquivo(arquivo: Blob, nome: string, o: OpcoesT
       const i = proximo++;
       if (i >= trechos.length) return;
       if (cache.has(i)) continue;
-      const texto = await transcreverTrecho(trechos[i]!, o.sinal);
-      cache.set(i, texto);
-      textos[i] = texto;
+      const r = await transcreverTrecho(trechos[i]!, o.sinal);
+      cache.set(i, r);
+      resultados[i] = r;
       o.aoProgresso?.(++feitos, trechos.length);
     }
   };
   await Promise.all(Array.from({ length: Math.min(o.concorrencia ?? 3, trechos.length) }, trabalhador));
 
   // Trechos são cortados em pausa: a quebra de linha é a fronteira natural.
-  const texto = textos.filter(Boolean).join('\n').trim();
+  const texto = resultados.map((r) => r.texto).filter(Boolean).join('\n').trim();
   if (!texto) throw new Error('O provedor não reconheceu fala em nenhum trecho do áudio.');
-  return { texto, trechos: trechos.length, silenciosos, duracaoSegundos };
+  const segmentos = resultados.flatMap((r) => r.segmentos);
+  return { texto, segmentos, trechos: trechos.length, silenciosos, duracaoSegundos };
 }
