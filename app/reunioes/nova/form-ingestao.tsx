@@ -1,11 +1,13 @@
 'use client';
 
 import { useRef, useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   AudioLines,
   Check,
   ClipboardPaste,
+  FolderUp,
   Loader2,
   Mic,
   Sparkles,
@@ -133,6 +135,13 @@ export function FormIngestao() {
         <BotaoAba ativo={aba === 'vivo'} onClick={() => setAba('vivo')} icone={<Mic size={14} />} beta>
           Gravar ao vivo
         </BotaoAba>
+        <Link
+          href="/reunioes/lote"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-t-md border-b-2 border-transparent px-3 py-2 text-[12.5px] font-medium text-ink-dim transition-colors hover:text-ink"
+        >
+          <FolderUp size={14} />
+          Várias de uma vez
+        </Link>
       </div>
 
       <div className="p-4">

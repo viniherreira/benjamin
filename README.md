@@ -48,6 +48,40 @@ de talk ratio e alertas por severidade.
 
 ---
 
+## Importação em lote
+
+`/reunioes/lote` recebe dezenas ou centenas de reuniões de uma vez: arquivos
+soltos, uma pasta inteira ou um `.zip` (inclusive zip dentro de zip).
+
+| Entra | Como é lido |
+|---|---|
+| `.txt` `.docx` `.odt` `.rtf` | texto; layout de documento do Meet e do Teams é reorganizado em `Nome: fala` |
+| `.vtt` `.srt` | legendas do Teams, Zoom, Meet e YouTube, com falante quando existe |
+| `.json` | Whisper, AssemblyAI, Deepgram, Fireflies, Rev — ou uma lista de reuniões |
+| `.csv` `.xlsx` | uma reunião por linha, uma fala por linha, ou manifesto |
+| `.mp3` `.m4a` `.wav` `.ogg` `.webm` `.mp4` `.mov`… | transcrito antes, de qualquer duração |
+
+Nada é enviado antes da revisão: título, cliente, data e tipo de cada reunião
+são deduzidos (pasta = cliente, data do nome do arquivo, tipo por palavra-chave,
+manifesto opcional por cima) e ficam editáveis numa tabela.
+
+O que o lote garante:
+
+- **Clientes diferentes em paralelo, o mesmo cliente em série e em ordem de
+  data.** A ingestão carrega a memória da conta antes de analisar; duas
+  reuniões da mesma conta em paralelo leriam a mesma memória.
+- **Áudio longo funciona na Vercel.** O navegador decodifica, reduz a mono
+  16 kHz e corta no silêncio em trechos de até 110 s (~3,5 MB), abaixo do
+  limite de 4,5 MB por requisição. Trecho só de silêncio não é enviado.
+- **Falha tem tipo.** 429 e 5xx esperam e tentam de novo; sessão expirada pausa
+  o lote; chave ausente encerra a etapa de uma vez com a mesma mensagem.
+- **Reenviar não duplica.** Reunião com mesmo título, data e texto já analisada
+  volta como "já importada".
+- **Nada some em silêncio.** Arquivo não lido aparece como ignorado, com motivo,
+  e o relatório CSV lista tudo.
+
+---
+
 ## Rodando localmente
 
 **Requisitos:** Node 20+ e um projeto Supabase com o schema aplicado.

@@ -7,6 +7,7 @@ import {
   Bell,
   Building2,
   FlaskConical,
+  FolderUp,
   GraduationCap,
   LayoutDashboard,
   MessagesSquare,
@@ -29,6 +30,7 @@ const GRUPOS: Grupo[] = [
       { href: '/', rotulo: 'Dashboard', icone: LayoutDashboard },
       { href: '/reunioes', rotulo: 'Reuniões', icone: MessagesSquare },
       { href: '/clientes', rotulo: 'Clientes', icone: Building2 },
+      { href: '/reunioes/lote', rotulo: 'Importar em lote', icone: FolderUp },
     ],
   },
   {
@@ -49,9 +51,20 @@ const GRUPOS: Grupo[] = [
   },
 ];
 
-function ehAtivo(pathname: string, href: string): boolean {
+function casa(pathname: string, href: string): boolean {
   if (href === '/') return pathname === '/';
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+const TODAS_AS_ROTAS = GRUPOS.flatMap((g) => g.itens.map((i) => i.href));
+
+/**
+ * Só o item mais específico acende: em /reunioes/lote, "Importar em lote"
+ * está ativo e "Reuniões" não, embora o caminho comece com /reunioes/.
+ */
+function ehAtivo(pathname: string, href: string): boolean {
+  if (!casa(pathname, href)) return false;
+  return !TODAS_AS_ROTAS.some((outra) => outra.length > href.length && casa(pathname, outra));
 }
 
 function AlternadorTema() {

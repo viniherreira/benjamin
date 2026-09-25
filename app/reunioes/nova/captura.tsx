@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AudioLines, Check, Loader2, Mic, Square, TriangleAlert, Upload } from 'lucide-react';
+import { transcreverArquivo } from '@/lib/lote/transcrever';
 
 /**
  * Adaptadores de entrada.
@@ -219,38 +220,45 @@ export function CapturaPorAudio({ onTexto }: { onTexto: (t: string) => void }) {
     null,
   );
   const [ok, setOk] = useState<string | null>(null);
+  const [progresso, setProgresso] = useState<string | null>(null);
 
   async function enviar(arquivo: File) {
     setEnviando(true);
     setErro(null);
     setOk(null);
+    setProgresso(null);
 
     try {
-      const form = new FormData();
-      form.append('audio', arquivo);
-      const r = await fetch('/api/transcribe', { method: 'POST', body: form });
-      const j = (await r.json().catch(() => ({}))) as {
-        texto?: string;
+      // Pergunta antes de decodificar uma hora de áudio para descobrir, no fim,
+      // que não há chave de transcrição.
+      const estado = (await fetch('/api/transcribe').then((r) => r.json()).catch(() => null)) as {
+        disponivel?: boolean;
         erro?: string;
         detalhe?: string;
         alternativas?: string[];
-      };
-
-      if (!r.ok || !j.texto) {
+      } | null;
+      if (estado && !estado.disponivel) {
         setErro({
-          titulo: j.erro ?? `Falha na transcrição (HTTP ${r.status}).`,
-          ...(j.detalhe ? { detalhe: j.detalhe } : {}),
-          ...(j.alternativas ? { alternativas: j.alternativas } : {}),
+          titulo: estado.erro ?? 'Transcrição indisponível.',
+          ...(estado.detalhe ? { detalhe: estado.detalhe } : {}),
+          ...(estado.alternativas ? { alternativas: estado.alternativas } : {}),
         });
         setEnviando(false);
         return;
       }
 
-      onTexto(j.texto);
-      setOk(`${arquivo.name} transcrito. Revise o texto na aba “Colar texto” antes de analisar.`);
-    } catch {
-      setErro({ titulo: 'Não foi possível falar com o servidor.' });
+      setProgresso('Preparando o áudio…');
+      const r = await transcreverArquivo(arquivo, arquivo.name, {
+        aoProgresso: (feitos, total) =>
+          setProgresso(total > 1 ? `Transcrevendo trecho ${Math.min(feitos + 1, total)} de ${total}…` : 'Transcrevendo…'),
+      });
+      onTexto(r.texto);
+      const minutos = r.duracaoSegundos ? ` (${Math.round(r.duracaoSegundos / 60)} min, ${r.trechos} trechos)` : '';
+      setOk(`${arquivo.name} transcrito${minutos}. Revise o texto na aba “Colar texto” antes de analisar.`);
+    } catch (e) {
+      setErro({ titulo: e instanceof Error ? e.message : 'Não foi possível transcrever o áudio.' });
     }
+    setProgresso(null);
     setEnviando(false);
   }
 
@@ -276,10 +284,10 @@ export function CapturaPorAudio({ onTexto }: { onTexto: (t: string) => void }) {
           {enviando ? <Loader2 size={17} className="animate-spin" /> : <Upload size={17} />}
         </span>
         <span className="text-[12.5px] font-medium text-ink">
-          {enviando ? 'Transcrevendo…' : 'Escolher arquivo de áudio'}
+          {enviando ? (progresso ?? 'Transcrevendo…') : 'Escolher arquivo de áudio'}
         </span>
         <span className="mt-1 text-[11.5px] text-ink-faint">
-          mp3, m4a, wav, webm ou ogg · até 25 MB
+          mp3, m4a, wav, ogg, webm, mp4 ou mov · qualquer duração (áudio longo é cortado em trechos)
         </span>
       </label>
 
