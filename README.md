@@ -82,6 +82,26 @@ O que o lote garante:
 
 ---
 
+## Gravação de reunião
+
+A aba **Gravar reunião** grava a call em dois canais separados: o microfone
+de quem vende e o som da aba do Meet, Teams ou Zoom web. Como cada canal é de
+um lado, a transcrição sai rotulada — `Ana Torres (Vendedor):` e `Cliente:` —
+e o motor calcula talk ratio e voz do cliente sem precisar adivinhar quem
+falou.
+
+- O áudio é salvo no navegador a cada 5 s. Se a aba fechar ou o computador
+  travar, a gravação aparece na próxima visita para ser transcrita.
+- Aba compartilhada sem som é recusada no início, com a instrução; canal mudo
+  por 45 s gera alerta durante a gravação.
+- Eco do alto-falante que vaza para o microfone é removido da fala do vendedor.
+- Segmentos que o Whisper produz sem ter ouvido fala (silêncio, laço de
+  repetição) são descartados.
+- Modo online exige Chrome ou Edge no computador. O modo presencial grava só o
+  microfone e não separa falantes.
+
+---
+
 ## Rodando localmente
 
 **Requisitos:** Node 20+ e um projeto Supabase com o schema aplicado.

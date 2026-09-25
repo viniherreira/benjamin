@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { limparTranscricaoDeTrecho } from '@/lib/lote/audio';
+import { filtrarSegmentos, type SegmentoWhisper } from '@/lib/gravacao/whisper';
 
 /**
  * Adaptador de entrada por áudio.
@@ -56,7 +58,7 @@ const INDISPONIVEL = {
     'O núcleo do Benjamin analisa texto. A captação por áudio é um adaptador plugável e precisa de credencial de STT. Sem ela o sistema não simula uma transcrição — use a aba "Colar texto" ou configure a chave no ambiente.',
   alternativas: [
     'Colar a transcrição pronta (Meet, Zoom ou Teams exportam legenda).',
-    'Gravar ao vivo pelo navegador, que usa a Web Speech API e não custa nada.',
+    'Gravar a reunião mesmo assim: o áudio fica salvo no navegador para ser transcrito quando a chave estiver configurada.',
     'Transcrever localmente com faster-whisper e colar o resultado.',
   ],
 };
@@ -96,9 +98,12 @@ export async function POST(req: Request) {
     envio.append('file', arquivo);
     envio.append('model', 'whisper-1');
     envio.append('language', 'pt');
-    // Sem timestamp no texto: o motor trabalha sobre a fala, e o preparo já
-    // remove marcações temporais quando elas aparecem.
-    envio.append('response_format', 'text');
+    // verbose_json traz, por segmento, início e fim — que é o que permite
+    // intercalar os dois canais de uma gravação — e os sinais que o Whisper usa
+    // para reconhecer as próprias alucinações. O texto devolvido continua sem
+    // marca de tempo.
+    envio.append('response_format', 'verbose_json');
+    envio.append('timestamp_granularities[]', 'segment');
     // Contexto opcional vindo do cliente (fim do trecho anterior) vai depois do
     // vocabulário; o provedor considera só os últimos ~224 tokens do prompt.
     const contexto = form.get('prompt');
@@ -136,16 +141,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const texto = (await resp.text()).trim();
-    if (!texto) {
-      return NextResponse.json(
-        { erro: 'O provedor devolveu uma transcrição vazia. Verifique o áudio.' },
-        { status: 422 },
-      );
-    }
+    const corpo = (await resp.json().catch(() => null)) as { text?: string; segments?: SegmentoWhisper[] } | null;
+    const { mantidos, descartados } = filtrarSegmentos(corpo?.segments ?? []);
+    // Sem segmentos (resposta inesperada), fica o texto inteiro, limpo.
+    const texto = corpo?.segments ? mantidos.map((m) => m.texto).join(' ').trim() : limparTranscricaoDeTrecho(corpo?.text ?? '');
 
     return NextResponse.json({
       texto,
+      segmentos: mantidos,
+      descartados,
       provedor: 'whisper-1',
       arquivo: arquivo.name,
       tamanho_mb: Number(mb.toFixed(2)),

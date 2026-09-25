@@ -8,7 +8,7 @@ export default function NovaReuniaoPage() {
     <>
       <PageHeader
         titulo="Nova reunião"
-        descricao="O Benjamin é agnóstico à origem do texto: cole a transcrição, envie o áudio ou capture ao vivo. O núcleo de análise é o mesmo nos três caminhos."
+        descricao="O Benjamin é agnóstico à origem do texto: cole a transcrição, envie o áudio ou grave a reunião. O núcleo de análise é o mesmo nos três caminhos."
       />
       <FormIngestao />
     </>

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { criarAgenda, ErroFatal, ErroSessao, ErroTransitorio, type Estado, type Tarefa } from '@/lib/lote/agenda';
 import { extrair, type Fonte } from '@/lib/lote/extrair';
-import { transcreverArquivo } from '@/lib/lote/transcrever';
+import { transcreverArquivo, type TrechoTranscrito } from '@/lib/lote/transcrever';
 import { nomeBase, semExtensao } from '@/lib/lote/texto';
 import { ROTULO_TIPO, type Formato, type ItemIgnorado, type TipoReuniao } from '@/lib/lote/tipos';
 import { fontesDeArraste, fontesDeLista } from './entrada';
@@ -51,7 +51,7 @@ type Linha = {
  * caracteres copiadas a cada atualização de progresso travariam a tela no
  * momento exato em que ela mais precisa responder.
  */
-type Conteudo = { texto?: string; audio?: Blob; cache: Map<number, string> };
+type Conteudo = { texto?: string; audio?: Blob; cache: Map<number, TrechoTranscrito> };
 
 type Transcricao = { disponivel: boolean; erro?: string } | null;
 
