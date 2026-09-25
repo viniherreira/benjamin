@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { criarReuniaoComAnalise } from '@/lib/supabase/persistencia';
+import { buscarReuniaoIdentica, criarReuniaoComAnalise } from '@/lib/supabase/persistencia';
 import { supabaseConfigurado } from '@/lib/supabase/server';
 
 /**
@@ -9,6 +9,12 @@ import { supabaseConfigurado } from '@/lib/supabase/server';
  * para a UI redirecionar ao briefing.
  *
  * O motor é determinístico e roda em processo Node — nada de edge aqui.
+ *
+ * O importador em lote chama esta mesma rota, uma reunião por requisição: cada
+ * chamada é uma invocação independente, e é isso que deixa cem reuniões
+ * rodarem em paralelo sem um servidor de fila. Ele manda `idempotente: true`,
+ * e aí uma reunião idêntica já analisada volta com 200 em vez de ser criada de
+ * novo — reenviar um lote interrompido não duplica nada.
  */
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,7 +39,13 @@ const Corpo = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar em AAAA-MM-DD.')
     .optional(),
   clienteNome: z.string().trim().max(120).optional(),
-  texto: z.string().trim().min(20, 'A transcrição precisa ter ao menos 20 caracteres.'),
+  texto: z
+    .string()
+    .trim()
+    .min(20, 'A transcrição precisa ter ao menos 20 caracteres.')
+    .max(1_500_000, 'Transcrição grande demais para uma reunião.'),
+  origem: z.enum(['paste', 'batch']).default('paste'),
+  idempotente: z.boolean().default(false),
 });
 
 export async function POST(req: Request) {
@@ -62,17 +74,23 @@ export async function POST(req: Request) {
     );
   }
 
-  const { titulo, tipo, data, clienteNome, texto } = parsed.data;
+  const { titulo, tipo, data, clienteNome, texto, origem, idempotente } = parsed.data;
+  const dataReuniao = data ?? new Date().toISOString().slice(0, 10);
 
   try {
+    if (idempotente) {
+      const existente = await buscarReuniaoIdentica({ titulo, data: dataReuniao, texto });
+      if (existente) return NextResponse.json({ id: existente, jaExistia: true }, { status: 200 });
+    }
     const id = await criarReuniaoComAnalise({
       titulo,
       tipo,
-      data: data ?? new Date().toISOString().slice(0, 10),
+      data: dataReuniao,
       clienteNome,
       texto,
+      origem,
     });
-    return NextResponse.json({ id }, { status: 201 });
+    return NextResponse.json({ id, jaExistia: false }, { status: 201 });
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : 'Erro ao analisar a reunião.';
     return NextResponse.json({ erro: mensagem }, { status: 500 });

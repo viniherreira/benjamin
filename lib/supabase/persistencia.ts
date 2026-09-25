@@ -105,12 +105,13 @@ async function upsertCliente(
   if (!limpo) return null;
 
   const sb = supabaseServer();
-  const existente = await sb
-    .from('customers')
-    .select('id')
-    .eq('org_id', ctx.orgId)
-    .ilike('name', limpo)
-    .maybeSingle();
+  // ilike trata % e _ como curinga: "Agro_Norte" casaria "AgroXNorte", e com
+  // dois casamentos o maybeSingle quebra toda ingestão futura daquele cliente.
+  const padrao = limpo.replace(/[\\%_]/g, (c) => `\\${c}`);
+  const buscar = () =>
+    sb.from('customers').select('id').eq('org_id', ctx.orgId).ilike('name', padrao).maybeSingle();
+
+  const existente = await buscar();
   if (existente.error) throw new Error(`Falha ao ler cliente: ${existente.error.message}`);
   if (existente.data?.id) return existente.data.id;
 
@@ -119,8 +120,16 @@ async function upsertCliente(
     .insert({ org_id: ctx.orgId, name: limpo, owner_id: ownerId })
     .select('id')
     .single();
-  if (criado.error) throw new Error(`Falha ao criar cliente: ${criado.error.message}`);
-  return criado.data.id;
+  if (!criado.error) return criado.data.id;
+
+  // Duas ingestões simultâneas do mesmo cliente novo: as duas leem "não
+  // existe", as duas inserem, e o índice único customers(org_id, lower(name))
+  // barra a segunda. Isso não é erro — é o outro pedido tendo chegado antes.
+  if (criado.error.code === '23505') {
+    const depois = await buscar();
+    if (depois.data?.id) return depois.data.id;
+  }
+  throw new Error(`Falha ao criar cliente: ${criado.error.message}`);
 }
 
 /* ------------------------------------------------------------------ *
@@ -305,7 +314,7 @@ export type EntradaIngestao = {
   data: string; // ISO yyyy-mm-dd
   clienteNome?: string;
   texto: string;
-  /** 'paste' na ingestão manual; 'corpus' quando vem do seed do arco. */
+  /** 'paste' na ingestão manual; 'batch' no importador em lote; 'corpus' no seed. */
   origem?: MeetingRow['source'];
 };
 
@@ -455,20 +464,28 @@ export async function criarReuniaoComAnalise(entrada: EntradaIngestao): Promise<
   const ctx = await garantirOrgEUsuaria();
   const customerId = await upsertCliente(ctx, entrada.clienteNome, ctx.userId);
 
-  const criada = await sb
-    .from('meetings')
-    .insert({
-      org_id: ctx.orgId,
-      customer_id: customerId,
-      owner_id: ctx.userId,
-      title: entrada.titulo,
-      meeting_type: entrada.tipo,
-      meeting_date: entrada.data,
-      source: entrada.origem ?? 'paste',
-      status: 'analyzing',
-    })
-    .select('id')
-    .single();
+  const inserir = (source: string) =>
+    sb
+      .from('meetings')
+      .insert({
+        org_id: ctx.orgId,
+        customer_id: customerId,
+        owner_id: ctx.userId,
+        title: entrada.titulo,
+        meeting_type: entrada.tipo,
+        meeting_date: entrada.data,
+        source,
+        status: 'analyzing',
+      })
+      .select('id')
+      .single();
+
+  let criada = await inserir(entrada.origem ?? 'paste');
+  // Uma origem nova ('batch') pode não existir numa CHECK de um banco criado
+  // antes dela. Perder o rótulo de origem é aceitável; perder a reunião, não.
+  if (criada.error?.code === '23514' && entrada.origem && entrada.origem !== 'paste') {
+    criada = await inserir('paste');
+  }
   if (criada.error) throw new Error(`Falha ao criar reunião: ${criada.error.message}`);
   const meetingId = criada.data.id;
 
@@ -557,6 +574,43 @@ export async function criarReuniaoComAnalise(entrada: EntradaIngestao): Promise<
  * A transcrição NUNCA é reescrita — ela é o dado bruto e o sistema de
  * coordenadas das evidências.
  */
+/**
+ * A mesma reunião já foi importada e analisada?
+ *
+ * Existe para o lote: quem solta cem arquivos, perde a conexão no arquivo 60 e
+ * solta o zip de novo não pode ganhar 60 reuniões duplicadas — cada duplicata
+ * dobraria objeções e dores na memória da conta. "Mesma" é título, data e
+ * texto idênticos (o texto já anonimizado, que é o que fica gravado).
+ *
+ * Os candidatos saem de título + data e o texto é comparado aqui, não num
+ * filtro: um .eq() com 34 mil caracteres viraria uma URL que o gateway recusa.
+ */
+export async function buscarReuniaoIdentica(entrada: Pick<EntradaIngestao, 'titulo' | 'data' | 'texto'>): Promise<string | null> {
+  const sb = supabaseServer();
+  const ctx = await garantirOrgEUsuaria();
+  const candidatas = await sb
+    .from('meetings')
+    .select('id')
+    .eq('org_id', ctx.orgId)
+    .eq('title', entrada.titulo)
+    .eq('meeting_date', entrada.data)
+    .eq('status', 'analyzed')
+    .limit(10);
+  if (candidatas.error) throw new Error(`Falha ao procurar reunião igual: ${candidatas.error.message}`);
+  if (!candidatas.data?.length) return null;
+
+  const alvo = preparar(entrada.texto).textoSeguro;
+  const textos = await sb
+    .from('transcripts')
+    .select('meeting_id, raw_text')
+    .in(
+      'meeting_id',
+      candidatas.data.map((m) => m.id),
+    );
+  if (textos.error) throw new Error(`Falha ao ler transcrição: ${textos.error.message}`);
+  return textos.data?.find((t) => t.raw_text === alvo)?.meeting_id ?? null;
+}
+
 export async function reanalisarReuniao(meetingId: string): Promise<void> {
   const sb = supabaseServer();
 

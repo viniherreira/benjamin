@@ -23,9 +23,12 @@ export default async function ReunioesPage() {
           titulo="Reuniões"
           descricao="Todas as transcrições analisadas, com sentimento, interesse, talk ratio e confiabilidade do dado."
           acoes={
-            <BotaoLink href="/reunioes/nova" variante="primario">
-              Nova reunião
-            </BotaoLink>
+            <>
+              <BotaoLink href="/reunioes/lote">Importar em lote</BotaoLink>
+              <BotaoLink href="/reunioes/nova" variante="primario">
+                Nova reunião
+              </BotaoLink>
+            </>
           }
         />
         <SemBanco oQueApareceAqui="Aqui fica a lista das transcrições analisadas, com título, cliente, data, tipo, sentimento, interesse, talk ratio e índice de confiabilidade." />
@@ -50,9 +53,12 @@ export default async function ReunioesPage() {
         titulo="Reuniões"
         descricao="Todas as transcrições analisadas, com sentimento, interesse, talk ratio e confiabilidade do dado."
         acoes={
-          <BotaoLink href="/reunioes/nova" variante="primario">
-            Nova reunião
-          </BotaoLink>
+          <>
+            <BotaoLink href="/reunioes/lote">Importar em lote</BotaoLink>
+            <BotaoLink href="/reunioes/nova" variante="primario">
+              Nova reunião
+            </BotaoLink>
+          </>
         }
       />
 

@@ -16,8 +16,22 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-/** Limite do plano gratuito da API de transcrição da OpenAI. */
-const LIMITE_MB = 25;
+/**
+ * Limite real por requisição. O provedor aceita 25 MB, mas uma Function da
+ * Vercel recusa corpo acima de 4,5 MB antes de o código rodar — anunciar 25
+ * aqui fazia todo áudio de reunião real falhar com um erro que não vinha
+ * desta rota. Áudio maior é cortado no navegador (lib/lote/audio.ts) em
+ * trechos de até 110 s, que ficam abaixo disto.
+ */
+const LIMITE_MB = 4.4;
+
+/**
+ * Vocabulário do domínio. O prompt do Whisper enviesa o reconhecimento para
+ * estas grafias: sem ele, "Protheus" sai "protéus" e "Fluig" sai "flui", e o
+ * extrator de produtos — que procura exatamente esses nomes — não os encontra.
+ */
+const VOCABULARIO =
+  'Reunião comercial em português do Brasil. TOTVS, Protheus, Datasul, RM, Fluig, RD Station, Techfin, TOTVS Carol, Winthor, Logix, Consinco, SAP, Senior, Sankhya, Oracle, ERP, CRM, BI, SaaS, churn, upsell.';
 
 const TIPOS_ACEITOS = [
   'audio/mpeg',
@@ -29,28 +43,27 @@ const TIPOS_ACEITOS = [
   'audio/x-wav',
   'audio/webm',
   'audio/ogg',
+  'audio/flac',
+  'audio/mpga',
   'video/mp4',
   'video/webm',
 ];
 
+
+const INDISPONIVEL = {
+  erro: 'Transcrição de áudio indisponível: OPENAI_API_KEY não está configurada.',
+  detalhe:
+    'O núcleo do Benjamin analisa texto. A captação por áudio é um adaptador plugável e precisa de credencial de STT. Sem ela o sistema não simula uma transcrição — use a aba "Colar texto" ou configure a chave no ambiente.',
+  alternativas: [
+    'Colar a transcrição pronta (Meet, Zoom ou Teams exportam legenda).',
+    'Gravar ao vivo pelo navegador, que usa a Web Speech API e não custa nada.',
+    'Transcrever localmente com faster-whisper e colar o resultado.',
+  ],
+};
+
 export async function POST(req: Request) {
   const chave = process.env.OPENAI_API_KEY;
-
-  if (!chave) {
-    return NextResponse.json(
-      {
-        erro: 'Transcrição de áudio indisponível: OPENAI_API_KEY não está configurada.',
-        detalhe:
-          'O núcleo do Benjamin analisa texto. A captação por áudio é um adaptador plugável e precisa de credencial de STT. Sem ela o sistema não simula uma transcrição — use a aba "Colar texto" ou configure a chave no ambiente.',
-        alternativas: [
-          'Colar a transcrição pronta (Meet, Zoom ou Teams exportam legenda).',
-          'Gravar ao vivo pelo navegador, que usa a Web Speech API e não custa nada.',
-          'Transcrever localmente com faster-whisper e colar o resultado.',
-        ],
-      },
-      { status: 503 },
-    );
-  }
+  if (!chave) return NextResponse.json(INDISPONIVEL, { status: 503 });
 
   let form: FormData;
   try {
@@ -86,6 +99,10 @@ export async function POST(req: Request) {
     // Sem timestamp no texto: o motor trabalha sobre a fala, e o preparo já
     // remove marcações temporais quando elas aparecem.
     envio.append('response_format', 'text');
+    // Contexto opcional vindo do cliente (fim do trecho anterior) vai depois do
+    // vocabulário; o provedor considera só os últimos ~224 tokens do prompt.
+    const contexto = form.get('prompt');
+    envio.append('prompt', typeof contexto === 'string' && contexto.trim() ? `${VOCABULARIO} ${contexto.slice(-600)}` : VOCABULARIO);
 
     const resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
@@ -94,7 +111,25 @@ export async function POST(req: Request) {
     });
 
     if (!resp.ok) {
-      const detalhe = await resp.text().catch(() => '');
+      const detalhe = (await resp.text().catch(() => '')).slice(0, 500);
+      // Cada status do provedor vira um status que o chamador sabe tratar:
+      // 429 espera e tenta de novo; chave inválida para tudo; áudio ruim é
+      // problema daquele arquivo e de nenhum outro.
+      if (resp.status === 429) {
+        return NextResponse.json(
+          { erro: 'O provedor de transcrição pediu para desacelerar (limite de requisições).', detalhe },
+          { status: 429, headers: { 'retry-after': resp.headers.get('retry-after') ?? '20' } },
+        );
+      }
+      if (resp.status === 401 || resp.status === 403) {
+        return NextResponse.json(
+          { erro: 'A chave de transcrição (OPENAI_API_KEY) foi recusada pelo provedor.', detalhe },
+          { status: 503 },
+        );
+      }
+      if (resp.status === 400 || resp.status === 413 || resp.status === 415) {
+        return NextResponse.json({ erro: 'O provedor não aceitou este áudio.', detalhe }, { status: 422 });
+      }
       return NextResponse.json(
         { erro: `O provedor de transcrição recusou o pedido (HTTP ${resp.status}).`, detalhe },
         { status: 502 },
@@ -121,4 +156,10 @@ export async function POST(req: Request) {
     const mensagem = erro instanceof Error ? erro.message : 'Erro ao transcrever.';
     return NextResponse.json({ erro: mensagem }, { status: 500 });
   }
+}
+
+/** O importador em lote pergunta antes de começar, para avisar na revisão e não no item 37. */
+export async function GET() {
+  const disponivel = Boolean(process.env.OPENAI_API_KEY);
+  return NextResponse.json({ disponivel, limite_mb: LIMITE_MB, ...(disponivel ? {} : INDISPONIVEL) });
 }
