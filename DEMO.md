@@ -172,7 +172,7 @@ Quando aparecer, apontar três coisas — **nesta ordem**:
 | "E se a IA errar?" | O sistema assume que erra. Toda extração mostra a evidência, todo campo é confirmável ou corrigível pelo vendedor, e a taxa de correção é exibida na tela de validação. |
 | "Por que o corpus real está vazio?" | Porque as gravações ainda não foram feitas. O protocolo está escrito e o pipeline pronto. Inventar amostra "real" seria fraudar o item que a rubrica pede primeiro. |
 | "Isso escala para 10.000/dia?" | 31 mil análises por minuto medidas num processo. 10.000/dia levam ~19 segundos. O gargalo é I/O, não o motor. |
-| "Analisa áudio?" | O núcleo consome texto. A captação é adaptador plugável: hoje colagem, Web Speech ao vivo e upload com STT. Sem credencial, mostramos o erro real em vez de simular. |
+| "Analisa áudio?" | O núcleo consome texto. A captação é adaptador plugável: hoje colagem, gravação ao vivo e upload de áudio, transcritos pelo Gemini com cada fala rotulada por falante — e a análise sai sozinha ao terminar. Sem credencial, mostramos o erro real em vez de simular. |
 
 ---
 

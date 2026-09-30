@@ -99,8 +99,8 @@ Variáveis de ambiente:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=      # obrigatória
 SUPABASE_SERVICE_ROLE_KEY=     # obrigatória — nunca vai para o cliente
-GEMINI_API_KEY=                # opcional — ativa o enriquecimento por LLM
-OPENAI_API_KEY=                # opcional — ativa transcrição de áudio
+GEMINI_API_KEY=                # opcional — enriquecimento por LLM e transcrição de áudio com falantes (camada gratuita)
+OPENAI_API_KEY=                # opcional — transcrição pelo Whisper (pago), usada só sem GEMINI_API_KEY
 ```
 
 **O app funciona só com as duas primeiras.** Faltando as opcionais, cada

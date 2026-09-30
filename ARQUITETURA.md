@@ -237,7 +237,8 @@ lib/
 NEXT_PUBLIC_SUPABASE_URL=      # obrigatória
 SUPABASE_SERVICE_ROLE_KEY=     # obrigatória — nunca vai para o cliente
 ANTHROPIC_API_KEY=             # opcional — ativa o motor híbrido
-OPENAI_API_KEY=                # opcional — ativa transcrição de áudio
+GEMINI_API_KEY=                # opcional — transcrição de áudio com falantes (camada gratuita)
+OPENAI_API_KEY=                # opcional — transcrição pelo Whisper, usada só sem GEMINI_API_KEY
 ```
 
 O app funciona com as duas primeiras. Faltando as opcionais, cada funcionalidade
