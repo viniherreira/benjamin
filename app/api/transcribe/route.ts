@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { ehFalha, MODELO_AUDIO, temChaveGemini, transcreverTrechoComGemini } from '@/lib/transcricao/gemini-audio';
 
 /**
  * Adaptador de entrada por áudio.
@@ -8,7 +9,11 @@ import { NextResponse } from 'next/server';
  * o provedor de STT e devolve a transcrição, que segue exatamente o mesmo
  * caminho da aba "Colar texto".
  *
- * Sem OPENAI_API_KEY a rota devolve erro explícito. A regra 10.5 do produto
+ * Provedor: Gemini (camada gratuita, separa quem falou) quando houver
+ * GEMINI_API_KEY; Whisper (pago, texto corrido) quando só houver
+ * OPENAI_API_KEY.
+ *
+ * Sem nenhuma das duas a rota devolve erro explícito. A regra 10.5 do produto
  * proíbe simular transcrição sem credencial: um texto inventado aqui
  * contaminaria todo o resto da demonstração com dado que ninguém falou.
  */
@@ -49,21 +54,27 @@ const TIPOS_ACEITOS = [
   'video/webm',
 ];
 
+type Provedor = 'gemini' | 'whisper';
+
+function provedor(): Provedor | null {
+  if (temChaveGemini()) return 'gemini';
+  if (process.env.OPENAI_API_KEY) return 'whisper';
+  return null;
+}
 
 const INDISPONIVEL = {
-  erro: 'Transcrição de áudio indisponível: OPENAI_API_KEY não está configurada.',
+  erro: 'Transcrição de áudio indisponível: nenhuma chave de transcrição configurada.',
   detalhe:
-    'O núcleo do Benjamin analisa texto. A captação por áudio é um adaptador plugável e precisa de credencial de STT. Sem ela o sistema não simula uma transcrição — use a aba "Colar texto" ou configure a chave no ambiente.',
+    'Configure GEMINI_API_KEY (camada gratuita do Google AI Studio, separa quem falou) ou OPENAI_API_KEY (Whisper, pago). Sem chave o sistema não simula uma transcrição.',
   alternativas: [
     'Colar a transcrição pronta (Meet, Zoom ou Teams exportam legenda).',
-    'Gravar ao vivo pelo navegador, que usa a Web Speech API e não custa nada.',
     'Transcrever localmente com faster-whisper e colar o resultado.',
   ],
 };
 
 export async function POST(req: Request) {
-  const chave = process.env.OPENAI_API_KEY;
-  if (!chave) return NextResponse.json(INDISPONIVEL, { status: 503 });
+  const qual = provedor();
+  if (!qual) return NextResponse.json(INDISPONIVEL, { status: 503 });
 
   let form: FormData;
   try {
@@ -84,11 +95,32 @@ export async function POST(req: Request) {
       { status: 413 },
     );
   }
-  if (arquivo.type && !TIPOS_ACEITOS.includes(arquivo.type)) {
+  // A gravação do navegador chega como "audio/webm;codecs=opus": vale o tipo base.
+  if (arquivo.type && !TIPOS_ACEITOS.includes(arquivo.type.split(';')[0]!.trim())) {
     return NextResponse.json(
       { erro: `Formato "${arquivo.type}" não aceito. Envie mp3, m4a, wav, webm ou ogg.` },
       { status: 415 },
     );
+  }
+
+  const contexto = form.get('prompt');
+  const ctx = typeof contexto === 'string' ? contexto : '';
+
+  if (qual === 'gemini') {
+    const r = await transcreverTrechoComGemini(arquivo, ctx);
+    if (ehFalha(r)) {
+      return NextResponse.json(
+        { erro: r.erro, ...(r.detalhe ? { detalhe: r.detalhe } : {}) },
+        { status: r.status, ...(r.retryAfter ? { headers: { 'retry-after': String(r.retryAfter) } } : {}) },
+      );
+    }
+    return NextResponse.json({
+      texto: r.texto,
+      provedor: MODELO_AUDIO,
+      separa_falantes: true,
+      arquivo: arquivo.name,
+      tamanho_mb: Number(mb.toFixed(2)),
+    });
   }
 
   try {
@@ -101,12 +133,11 @@ export async function POST(req: Request) {
     envio.append('response_format', 'text');
     // Contexto opcional vindo do cliente (fim do trecho anterior) vai depois do
     // vocabulário; o provedor considera só os últimos ~224 tokens do prompt.
-    const contexto = form.get('prompt');
-    envio.append('prompt', typeof contexto === 'string' && contexto.trim() ? `${VOCABULARIO} ${contexto.slice(-600)}` : VOCABULARIO);
+    envio.append('prompt', ctx.trim() ? `${VOCABULARIO} ${ctx.slice(-600)}` : VOCABULARIO);
 
     const resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${chave}` },
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
       body: envio,
     });
 
@@ -147,6 +178,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       texto,
       provedor: 'whisper-1',
+      separa_falantes: false,
       arquivo: arquivo.name,
       tamanho_mb: Number(mb.toFixed(2)),
       aviso:
@@ -158,8 +190,18 @@ export async function POST(req: Request) {
   }
 }
 
-/** O importador em lote pergunta antes de começar, para avisar na revisão e não no item 37. */
+/**
+ * O navegador pergunta antes de começar: se há transcrição e se ela separa
+ * quem falou. Com separação, os trechos vão em sequência levando contexto —
+ * é o que mantém "Falante A" sendo a mesma pessoa do começo ao fim.
+ */
 export async function GET() {
-  const disponivel = Boolean(process.env.OPENAI_API_KEY);
-  return NextResponse.json({ disponivel, limite_mb: LIMITE_MB, ...(disponivel ? {} : INDISPONIVEL) });
+  const qual = provedor();
+  return NextResponse.json({
+    disponivel: qual !== null,
+    limite_mb: LIMITE_MB,
+    provedor: qual,
+    separa_falantes: qual === 'gemini',
+    ...(qual ? {} : INDISPONIVEL),
+  });
 }

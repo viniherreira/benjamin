@@ -133,11 +133,17 @@ export type ResultadoFatiamento = {
  */
 export const EXT_WHISPER = new Set(['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm']);
 
-export async function fatiarAudio(arquivo: Blob, nome: string): Promise<ResultadoFatiamento> {
+export async function fatiarAudio(
+  arquivo: Blob,
+  nome: string,
+  o: { sempreDecodificar?: boolean } = {},
+): Promise<ResultadoFatiamento> {
   // Formato que o provedor não lê (mov, aac, wma, amr, 3gp, mkv) passa pela
-  // decodificação mesmo pequeno: sai WAV, que ele lê.
+  // decodificação mesmo pequeno: sai WAV, que ele lê. O Gemini não garante
+  // webm nem m4a — que é justamente o que o navegador grava —, então com ele
+  // tudo passa por aqui.
   const ext = nome.split('.').pop()?.toLowerCase() ?? '';
-  if (arquivo.size <= LIMITE_DIRETO_BYTES && EXT_WHISPER.has(ext)) {
+  if (!o.sempreDecodificar && arquivo.size <= LIMITE_DIRETO_BYTES && EXT_WHISPER.has(ext)) {
     return { trechos: [{ blob: arquivo, nome, inicio: 0, fim: 0 }], duracaoSegundos: null, silenciosos: 0 };
   }
 

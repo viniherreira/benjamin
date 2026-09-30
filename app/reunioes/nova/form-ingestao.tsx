@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -71,10 +71,16 @@ export function FormIngestao() {
     }
   }
 
-  async function analisar() {
+  async function analisar(textoPronto?: string) {
+    const conteudo = textoPronto ?? texto;
     setErro(null);
-    if (texto.trim().length < 20) {
-      setErro('Cole uma transcrição com ao menos 20 caracteres.');
+    if (conteudo.trim().length < 20) {
+      setAba('texto');
+      setErro(
+        textoPronto === undefined
+          ? 'Cole uma transcrição com ao menos 20 caracteres.'
+          : 'A transcrição saiu curta demais para analisar. Confira o texto abaixo.',
+      );
       return;
     }
 
@@ -100,7 +106,7 @@ export function FormIngestao() {
           tipo,
           data,
           clienteNome: cliente.trim() || undefined,
-          texto,
+          texto: conteudo,
         }),
       });
       const corpo = (await resp.json().catch(() => ({}))) as { id?: string; erro?: string };
@@ -108,6 +114,9 @@ export function FormIngestao() {
       if (!resp.ok || !corpo.id) {
         pararTimer();
         setEnviando(false);
+        // Veio de gravação ou upload: o texto transcrito fica na aba de texto,
+        // junto do erro, para não se perder.
+        setAba('texto');
         setErro(corpo.erro ?? `Falha na análise (HTTP ${resp.status}).`);
         return;
       }
@@ -118,9 +127,20 @@ export function FormIngestao() {
     } catch {
       pararTimer();
       setEnviando(false);
+      setAba('texto');
       setErro('Não foi possível falar com o servidor. Verifique a conexão e tente de novo.');
     }
   }
+
+  // A gravação chama isto minutos depois de começar. Pelo ref, a análise usa o
+  // título e o cliente que estão na tela AGORA, não os do momento em que o
+  // botão de gravar foi apertado.
+  const analisarRef = useRef(analisar);
+  analisarRef.current = analisar;
+  const aoTranscrever = useCallback((t: string) => {
+    setTexto(t);
+    void analisarRef.current(t);
+  }, []);
 
   return (
     <div className="vidro rounded-xl">
@@ -145,62 +165,64 @@ export function FormIngestao() {
       </div>
 
       <div className="p-4">
-        {aba === 'texto' ? (
-          enviando ? (
-            <Progresso etapa={etapa} />
-          ) : (
-            <div className="grid gap-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className={ROTULO} htmlFor="titulo">
-                    Título
-                  </label>
-                  <input
-                    id="titulo"
-                    className={CAMPO}
-                    placeholder="Ex.: Descoberta com João Silva"
-                    value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className={ROTULO} htmlFor="cliente">
-                    Cliente <span className="normal-case text-ink-faint">(opcional)</span>
-                  </label>
-                  <input
-                    id="cliente"
-                    className={CAMPO}
-                    placeholder="Ex.: João Silva"
-                    value={cliente}
-                    onChange={(e) => setCliente(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className={ROTULO} htmlFor="tipo">
-                    Tipo de reunião
-                  </label>
-                  <select id="tipo" className={CAMPO} value={tipo} onChange={(e) => setTipo(e.target.value)}>
-                    {TIPOS.map((t) => (
-                      <option key={t.valor} value={t.valor}>
-                        {t.rotulo}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={ROTULO} htmlFor="data">
-                    Data
-                  </label>
-                  <input
-                    id="data"
-                    type="date"
-                    className={CAMPO}
-                    value={data}
-                    onChange={(e) => setData(e.target.value)}
-                  />
-                </div>
+        {enviando ? (
+          <Progresso etapa={etapa} />
+        ) : (
+          <div className="grid gap-4">
+            {/* Metadados em todas as abas: a gravação analisa sozinha ao parar,
+                então título e cliente precisam poder ser preenchidos antes. */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className={ROTULO} htmlFor="titulo">
+                  Título
+                </label>
+                <input
+                  id="titulo"
+                  className={CAMPO}
+                  placeholder="Ex.: Descoberta com João Silva"
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                />
               </div>
+              <div>
+                <label className={ROTULO} htmlFor="cliente">
+                  Cliente <span className="normal-case text-ink-faint">(opcional)</span>
+                </label>
+                <input
+                  id="cliente"
+                  className={CAMPO}
+                  placeholder="Ex.: João Silva"
+                  value={cliente}
+                  onChange={(e) => setCliente(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={ROTULO} htmlFor="tipo">
+                  Tipo de reunião
+                </label>
+                <select id="tipo" className={CAMPO} value={tipo} onChange={(e) => setTipo(e.target.value)}>
+                  {TIPOS.map((t) => (
+                    <option key={t.valor} value={t.valor}>
+                      {t.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={ROTULO} htmlFor="data">
+                  Data
+                </label>
+                <input
+                  id="data"
+                  type="date"
+                  className={CAMPO}
+                  value={data}
+                  onChange={(e) => setData(e.target.value)}
+                />
+              </div>
+            </div>
 
+            <div className={aba === 'texto' ? 'grid gap-4' : 'hidden'}>
               <div>
                 <div className="mb-1 flex items-center justify-between">
                   <label className={ROTULO + ' mb-0'} htmlFor="texto">
@@ -240,7 +262,7 @@ export function FormIngestao() {
                 </p>
                 <button
                   type="button"
-                  onClick={analisar}
+                  onClick={() => void analisar()}
                   className="inline-flex items-center gap-1.5 rounded-md bg-accent px-4 py-2 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90"
                 >
                   <Sparkles size={14} />
@@ -248,29 +270,15 @@ export function FormIngestao() {
                 </button>
               </div>
             </div>
-          )
-        ) : (
-          <div className="space-y-3">
-            {aba === 'vivo' ? (
-              <CapturaAoVivo texto={texto} onTexto={setTexto} />
-            ) : (
-              <CapturaPorAudio onTexto={setTexto} />
-            )}
-            {texto.trim().length >= 20 ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
-                <p className="text-[11.5px] text-ink-dim">
-                  {palavras} palavra(s) capturada(s). O texto segue o mesmo caminho de análise da aba
-                  “Colar texto”.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setAba('texto')}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-ink transition-colors hover:border-line-strong"
-                >
-                  Revisar e analisar
-                </button>
-              </div>
-            ) : null}
+
+            {/* Montadas mesmo escondidas: trocar de aba no meio não pode
+                interromper uma gravação nem um upload em andamento. */}
+            <div className={aba === 'audio' ? '' : 'hidden'}>
+              <CapturaPorAudio aoTranscrever={aoTranscrever} />
+            </div>
+            <div className={aba === 'vivo' ? '' : 'hidden'}>
+              <CapturaAoVivo aoTranscrever={aoTranscrever} />
+            </div>
           </div>
         )}
       </div>
